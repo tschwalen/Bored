@@ -3,7 +3,9 @@ import sys
 
 # lexer helper methods
 
-keywords = {}
+keywords = {"var", "if", "then", "else", "for", "while", "do", "in"}
+
+
 symbols = {
     "{" : "left-brace",
     "}" : "right-brace",
@@ -45,6 +47,11 @@ multi = {
     "%=" : "percent-equals"
 }
 
+def pretty_print(ts):
+    print("[")
+    for t in ts:
+        print(f"{t[0]} : {t[1]}")
+    print("]")
 
 def is_id_char(c):
     """returns true if the passed character is a valid identifier character"""
@@ -65,14 +72,14 @@ def lex_string(source):
                 i += 1
         else:
             # identifiers
-            if source[i].isalpha():
+            if source[i].isalpha() or source[i] == "_":
                 j = i + 1
                 while j < len(source) and is_id_char(source[j]):
                     j += 1
 
                 word = source[i : j]
                 
-                if word in keywords.keys():
+                if word in keywords:
                     tokens.append( ('keyword', word) )
                 else:
                     tokens.append( ('identifier', source[i : j]) )
@@ -114,7 +121,7 @@ def lex_string(source):
             else:
                 raise Exception("Invalid token start: " + source[i])
     
-    print(tokens)
+    pretty_print(tokens)
                 
                  
 
