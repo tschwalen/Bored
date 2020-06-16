@@ -3,7 +3,7 @@ import sys
 
 # lexer helper methods
 
-keywords = {"var", "if", "then", "else", "for", "while", "do", "in"}
+keywords = {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"}
 
 
 symbols = {

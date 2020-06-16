@@ -1,0 +1,72 @@
+program -> top_lvl_stmt program
+        |  top_lvl_stmt
+
+top_lvl_stmt -> 'var' <identifier> '=' expr ';'
+             |  func_dec
+
+func_dec -> 'function' <identifier> '(' arg_list ')' block
+         |  'function' <identifier> '(' ')' block
+
+arg_list -> <identifier> ',' arg_list
+         |  <identifier>
+
+block -> '{' stmt_sequence '}'
+
+stmt_sequence -> stmt stmt_sequence
+              |  stmt
+
+stmt -> 'var' <identifier> '=' expr ';'
+     |   expr '=' expr ';'
+     |  'return' expr ';'
+     |   modifier ';'
+     |   func_call ';'
+     |   'if' expr 'then' block 
+     |   'if' expr 'then' block 'else' block
+     |   'while' expr 'do' block
+
+modifier -> <identifier> += expr
+         |  <identifier> -= expr
+         |  <identifier> /= expr
+         |  <identifier> *= expr
+         |  <identifier> %= expr
+
+func_call -> <identifier> '(' ')'
+          |  <identifier> '(' expr_list ')'
+
+expr_list -> expr ',' expr_list
+          |  expr
+
+expr -> expr '|' and_expr
+     |  and_expr
+
+and_expr -> and_expr '&' comparison
+         |  comparison
+
+comparison -> comparison == term 
+           |  comparison != term  
+           |  comparison > term  
+           |  comparison < term  
+           |  comparison >= term  
+           |  comparison <= term  
+           |  term  
+
+term -> term '+' factor
+     |  term '-' factor
+     |  factor
+
+factor -> factor '*' unary    
+       |  factor '/' unary
+       |  factor '%' unary    
+       |  unary
+
+unary -> '-' primary
+      |  '!' primary
+      |  primary
+
+primary -> <int-literal>
+        |  <real-literal>
+        |  <string-literal>
+        |  <bool-literal>
+        |  <identifier>
+        |  '(' expr ')'
+        |  func_call

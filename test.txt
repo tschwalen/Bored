@@ -1,0 +1,9 @@
+
+function do_something (n) {
+    return (n - 1) * (n - 1);
+}
+
+function main () {
+    var x = 5.0;
+    do_something(x);
+}

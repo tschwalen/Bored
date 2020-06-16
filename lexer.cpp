@@ -2,11 +2,12 @@
 #include <ctype.h>
 #include <vector> 
 #include <string>
+#include <fstream>
 #include <unordered_set> 
 
 
 
-std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in"} );
+std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
 std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":" } );
 std::unordered_set<std::string> maybe_multichar ( {"=", "!", ">", "<", "+", "-", "*", "/", "%"} );
 std::unordered_set<std::string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=" } );
@@ -85,6 +86,7 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                 std::string string_literal = source.substr(index + 1, end - (index + 1));
                 std::pair<std::string, std::string> token = std::make_pair(string_literal, "string-literal");
                 tokens.push_back(token);
+                index = end + 1;
             }
             // symbols and operators
             else if (symbols.count(std::string(1, source[index])) > 0) {
@@ -128,6 +130,14 @@ int main( int argc, const char* argv[] ) {
     // for now just take an argument string and tokenize it, worry about file IO later
     if( argc > 1 ) {
         std::string source = argv[1];
+
+        // if file flag is used, read from file instead 
+        if( source == "-f" && argc > 2 ) {
+            std::string source_file = argv[2];
+            std::ifstream ifs(source_file);
+            source.assign( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) );
+        } 
+
 
         std::vector<std::pair<std::string, std::string>> tokens = lex_string(source);
 
