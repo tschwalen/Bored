@@ -125,6 +125,19 @@ void pretty_print( std::vector<std::pair<std::string, std::string>> &tokens) {
     printf("]\n");
 }
 
+void tuple_print( std::vector<std::pair<std::string, std::string>> &tokens ) {
+    printf("[\n");
+
+    int i = 0;
+    while (i < tokens.size() - 1) {
+        printf("(\"%s\", \"%s\"),\n", tokens[i].first.c_str(), tokens[i].second.c_str());
+        ++i;
+    }
+    printf("(\"%s\", \"%s\")\n", tokens[i].first.c_str(), tokens[i].second.c_str());
+
+    printf("]\n");
+}
+
 
 int main( int argc, const char* argv[] ) {
     // for now just take an argument string and tokenize it, worry about file IO later
@@ -141,7 +154,7 @@ int main( int argc, const char* argv[] ) {
 
         std::vector<std::pair<std::string, std::string>> tokens = lex_string(source);
 
-        pretty_print(tokens);
+        tuple_print(tokens);
     }
     return 0;
 }
