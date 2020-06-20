@@ -1,0 +1,21 @@
+[
+("var", "keyword"),
+("something", "identifier"),
+("=", "symbol"),
+("x", "identifier"),
+("+", "symbol"),
+("4", "int-literal"),
+("==", "symbol"),
+("y", "identifier"),
+("*", "symbol"),
+("foo", "identifier"),
+("(", "symbol"),
+(")", "symbol"),
+(";", "symbol"),
+("var", "keyword"),
+("z", "identifier"),
+("=", "symbol"),
+("-", "symbol"),
+("5", "int-literal"),
+(";", "symbol")
+]
