@@ -99,6 +99,18 @@ class Program(Node):
     def __repr__(self):
         return repr(self.children)
 
+class Block(Node):
+    def __init__(self, stmts):
+        self.type = "Block"
+        self.stmts = stmts
+
+    # consider removing
+    def add_stmt(self, node):
+        self.stmts.append( node )
+
+    def __repr__(self):
+        return repr(self.stmts)
+
 class Assign(Node):
     def __init__(self, identifier, expr_node):
         self.type = "Assign"
@@ -277,7 +289,8 @@ def parse_program():
             ast_node = parse_declare()
             ast_root.add_top_level_stmt( ast_node )
         elif tv == "function":
-            pass
+            ast_node = parse_function_declare()
+            ast_root.add_top_level_stmt( ast_node )
         else:
             parse_error("Encountered unexpected token \'{}\' while parsing top-level statement".format(tv))
 
@@ -287,6 +300,139 @@ def parse_program():
 
     return ast_root
 
+
+def parse_function_declare():
+    matchKeyword("function")
+
+    fn_name = tokenValue( matchTokenType("identifier") )
+
+    matchSymbol("(")
+
+    if tokenValue( currentToken() ) == ")":
+        arg_names = []
+    else:
+        arg_names = parse_arg_list()
+    
+    matchSymbol(")")
+
+    body = parse_block()
+
+    return FunctionDeclare(identifier=fn_name, args=arg_names, body=body)
+
+def parse_arg_list():
+    arg = tokenValue( matchTokenType("identifier") )
+
+    if tokenValue( currentToken() ) == ",":
+        matchSymbol(",")
+        return [arg] + parse_arg_list()
+
+    return [arg]
+
+def parse_block():
+    # one thing we could do here is accept single statements followed by a semicolon, without requiring braces around it. 
+    # this would be a simple matter of checking if the next token was a brace symbol. 
+    # I'm undecided on this so far because I'm not sure if I'll like how it looks, and because I'm not sure if I want 
+    # to allow single statements in every case where I have a <block> in the grammar. for example, I think it would look
+    # strange for function declarations not to include braces.
+
+    matchSymbol("{")
+    stmts = [ parse_statement() ]
+
+    # yes I'm doing it iteratively. Functions tend to have no more than 6 or 7 arguments whereas a block can have dozens of statements
+    while tokenValue( currentToken() ) != "}":
+        stmts.append( parse_statement() )
+
+    matchSymbol("}")
+    return Block(stmts=stmts)
+
+def parse_statement():
+    ct = currentToken()
+
+    if tokenType(ct) == "identifier":
+        nt = peekToken()
+        tv = tokenValue(nt)
+        if tv == "=":
+            stmt = parse_assign()
+            matchSymbol(";")
+            return stmt
+
+        if tv == "(":
+            stmt = parse_function_call()
+            matchSymbol(";")
+            return stmt
+
+        return parse_modifier()
+
+    tv = tokenValue(ct)
+    
+    if tv == "var":
+        return parse_declare()
+
+    if tv == "return":
+        matchKeyword("return")
+        expr = parse_expr()
+        matchSymbol(";")
+        return Return(expr_node=expr)
+
+    if tv == "if":
+        return parse_if()
+
+    if tv == "while":
+        return parse_while()
+
+    parse_error("Invalid start of statement, encountered {}".format(tv))
+
+def parse_if():
+
+    matchKeyword("if")
+    condition = parse_expr()
+
+    matchKeyword("then")
+    then_body = parse_block()
+
+    if tokenValue(currentToken()) == "else":
+
+        matchKeyword("else")
+        else_body = parse_block()
+        return IfElse(condition=condition, then_body=then_body, else_body=else_body)
+
+    return IfThen(condition=condition, body=then_body)
+
+def parse_while():
+    matchKeyword("while")
+
+    condition = parse_expr()
+
+    matchKeyword("do")
+
+    body = parse_block()
+
+    return While(condition=condition, body=body)
+
+def parse_assign():
+    identifier = tokenValue( matchTokenType("identifier") )
+
+    matchSymbol("=")
+
+    expression = parse_expr()
+
+    matchSymbol(";")
+
+    return Assign(identifier=identifier, expr_node=expression)
+
+
+def parse_modifier():
+    identifier = tokenValue( matchTokenType("identifier") )
+    tv = tokenValue( currentToken() )
+    if tv in ["+=", "-=", "/=", "*=", "%="]:
+            matchSymbol(tv)
+
+            expr = parse_expr()
+
+            matchSymbol(";")
+            return AssignOp(identifier=identifier, op=tv, expr_node=expr)
+    
+    parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
 
 def parse_declare():
     matchKeyword("var")
