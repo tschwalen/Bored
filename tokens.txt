@@ -32,6 +32,12 @@
 ("do_something", "identifier"),
 ("(", "symbol"),
 ("x", "identifier"),
+(",", "symbol"),
+("y", "identifier"),
+(",", "symbol"),
+("z", "identifier"),
+("+", "symbol"),
+("z", "identifier"),
 (")", "symbol"),
 (";", "symbol"),
 ("}", "symbol")
