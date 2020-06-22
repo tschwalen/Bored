@@ -2,6 +2,8 @@
 var minutes_in_day = 1440;
 var approx_e = 2.71828;
 var message = "Good morning!";
+var boolean_boy = true;
+var also_a_boolean = false;
 
 
 function spam_message (message, times) {

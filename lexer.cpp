@@ -46,6 +46,9 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                 if ( keywords.count(word) > 0 ) {
                     token = std::make_pair( word, "keyword" ); 
                 }
+                else if (word == "true" || word == "false") {
+                    token = std::make_pair( word, "bool-literal" );
+                }
                 else {
                     token = std::make_pair( word, "identifier" );
                 }
