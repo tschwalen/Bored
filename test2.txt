@@ -1,11 +1,15 @@
 
-function do_something (n) {
-    return (n - 1) * (n - 1);
-}
+var minutes_in_day = 1440;
+var approx_e = 2.71828;
+var message = "Good morning!";
 
-function main () {
-    var x = 5.0;
-    do_something(x);
+
+function spam_message (message, times) {
+    var i = 0;
+    while i < times do {
+        print(message);
+        i += 1;
+    }
 }
 
 function greatest_common_factor (a, b) {   
@@ -23,3 +27,4 @@ function greatest_common_factor (a, b) {
 function is_even (n) {
     return n % 2 == 0;
 }
+

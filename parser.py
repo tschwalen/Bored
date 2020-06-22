@@ -443,7 +443,6 @@ def parse_statement():
         tv = tokenValue(nt)
         if tv == "=":
             stmt = parse_assign()
-            matchSymbol(";")
             return stmt
 
         if tv == "(":
@@ -481,7 +480,6 @@ def parse_if():
     then_body = parse_block()
 
     if tokenValue(currentToken()) == "else":
-
         matchKeyword("else")
         else_body = parse_block()
         return IfElse(condition=condition, then_body=then_body, else_body=else_body)
@@ -654,7 +652,14 @@ def pretty_print_ast(node, _prefix="", _last=True):
 
 if __name__ == "__main__":
     
-    with open('tokens.txt', 'r') as file:
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
+
+    _file = "tokens.txt"
+    if len(args) > 0:
+        _file = args[0]
+
+
+    with open(_file, 'r') as file:
         data = file.read().replace('\n', '')
     
     # wow dangerous
