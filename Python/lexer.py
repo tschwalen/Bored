@@ -53,6 +53,18 @@ def pretty_print(ts):
         print(f"{t[0]} : {t[1]}")
     print("]")
 
+def tuple_print( tokens ):
+    print("[")
+
+    i = 0;
+    while i < (len(tokens) - 1):
+        print("(\"%s\", \"%s\")," % (tokens[i][1], tokens[i][0]))
+        i += 1
+    print("(\"%s\", \"%s\")" % (tokens[i][1], tokens[i][0]))
+
+    print("]");
+
+
 def is_id_char(c):
     """returns true if the passed character is a valid identifier character"""
     return c.isalnum() or (c == "_")
@@ -121,7 +133,8 @@ def lex_string(source):
             else:
                 raise Exception("Invalid token start: " + source[i])
     
-    pretty_print(tokens)
+    #pretty_print(tokens)
+    tuple_print(tokens)
                 
                  
 

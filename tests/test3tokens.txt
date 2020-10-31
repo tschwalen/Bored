@@ -1,0 +1,11 @@
+[
+("var", "keyword"),
+("subtraction", "identifier"),
+("=", "symbol"),
+("5", "int-literal"),
+("-", "symbol"),
+("4", "int-literal"),
+("-", "symbol"),
+("3", "int-literal"),
+(";", "symbol")
+]

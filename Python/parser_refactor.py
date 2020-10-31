@@ -7,6 +7,7 @@ class ParseState:
         self.tokens = tokens
         self.index = index
         self.error_fn = error_fn
+        print(" ".join([t[0] for t in tokens]))
 
     def currentToken(self):
         if self.index >= len(self.tokens):
@@ -20,6 +21,7 @@ class ParseState:
         return self.tokens[i]
 
     def advance(self):
+        #print([t[0] for t in self.tokens[self.index:]])
         ct = self.currentToken()
         self.index += 1
         return ct
@@ -231,13 +233,28 @@ def parse_declare(parse_state):
 
     return Declare(identifier=identifier, expr_node=expression)
 
-def parse_expr(parse_state):
-    left_expr = parse_and_expr(parse_state)
+# this is tacked on and can definitely be handled in a better way
+def binding_power(tok):
+    t = tokenValue(tok)
+    bp = {
+        '|' : 1,
+        '&' : 1,
+        "==" : 3, "!=" : 3, "==" : 3, "<=" : 3, ">=" : 3, "<" : 3, ">" : 3,
+        "+" : 4, "-" : 4,
+        "*" : 5, "/" : 5, "%" : 5
+    }
+    return bp.get(t, -1)
 
-    if tokenValue(parse_state.currentToken()) == "|":
-        parse_state.matchSymbol("|")
-        right_expr = parse_expr(parse_state)
-        return BinaryOp(op="|", left_expr=left_expr, right_expr=right_expr)
+def parse_expr(parse_state, rbp = 0):
+    left_expr = parse_primary(parse_state)
+
+    # here we go into pratt parsing
+    while ( binding_power(parse_state.currentToken()) > rbp):
+        op = parse_state.currentToken()
+        parse_state.advance()
+        left_expr = BinaryOp(op=tokenValue(op), 
+                             left_expr=left_expr, 
+                             right_expr=parse_expr(parse_state, binding_power(op)))
     
     return left_expr
 
@@ -293,6 +310,9 @@ def parse_unary(parse_state):
     return parse_primary(parse_state)
 
 def parse_primary(parse_state):
+    '''
+    parse unary here instead?
+    '''
     ct = parse_state.currentToken()
 
     if tokenValue(ct) == "(":
@@ -307,6 +327,10 @@ def parse_primary(parse_state):
             return parse_function_call(parse_state)
         identifier = tokenValue( parse_state.matchTokenType("identifier") )
         return VariableLookup(identifier=identifier)
+
+    # a little bit redundant, but works
+    if tokenValue(ct) in ["+", "-"]:
+        return parse_unary(parse_state)
 
     value, literal_type = parse_state.matchLiteral()
     return Literal(literal_type=literal_type, value=value)

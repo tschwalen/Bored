@@ -215,4 +215,4 @@ class Literal(Node):
         return []
 
     def __str__(self):
-        return "({}, {})".format(self.value, self.literal_type)
+        return "({}, {})".format(self.literal_value, self.literal_type)
