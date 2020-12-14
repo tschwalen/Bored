@@ -1,7 +1,6 @@
 import sys
 from AST import *
 
-
 class ParseState:
     def __init__(self, tokens, index=0, error_fn=None):
         self.tokens = tokens
@@ -65,25 +64,19 @@ class ParseState:
             print("Parse error: {}".format(msg))
             raise SystemExit
 
-
+precedence = {
+    '|' : 1,
+    '&' : 1,
+    "==" : 3, "!=" : 3, "<=" : 3, ">=" : 3, "<" : 3, ">" : 3,
+    "+" : 4, "-" : 4,
+    "*" : 5, "/" : 5, "%" : 5
+}
 
 # may seem pointless, but will make the code more readible. Used sparingly
 def tokenValue(t):
     return t[0]
 def tokenType(t):
     return t[1]
-
-# TODO: refactor
-def binding_power(tok):
-    t = tokenValue(tok)
-    bp = {
-        '|' : 1,
-        '&' : 1,
-        "==" : 3, "!=" : 3, "==" : 3, "<=" : 3, ">=" : 3, "<" : 3, ">" : 3,
-        "+" : 4, "-" : 4,
-        "*" : 5, "/" : 5, "%" : 5
-    }
-    return bp.get(t, -1)
 
 
 def parse_program(parse_state):
@@ -104,12 +97,9 @@ def parse_program(parse_state):
 
     return ast_root
 
-
 def parse_function_declare(parse_state):
     parse_state.matchKeyword("function")
-
     fn_name, _ = parse_state.matchTokenType("identifier")
-
     parse_state.matchSymbol("(")
 
     if tokenValue( parse_state.currentToken() ) == ")":
@@ -118,7 +108,6 @@ def parse_function_declare(parse_state):
         arg_names = parse_arg_list(parse_state)
     
     parse_state.matchSymbol(")")
-
     body = parse_block(parse_state)
 
     return FunctionDeclare(identifier=fn_name, args=arg_names, body=body)
@@ -183,13 +172,11 @@ def parse_statement(parse_state):
     if tv == "while":
         return parse_while(parse_state)
 
-    parse_error("Invalid start of statement, encountered {}".format(tv))
+    parse_state.parse_error("Invalid start of statement, encountered {}".format(tv))
 
 def parse_if(parse_state):
-
     parse_state.matchKeyword("if")
     condition = parse_expr(parse_state)
-
     parse_state.matchKeyword("then")
     then_body = parse_block(parse_state)
 
@@ -203,7 +190,6 @@ def parse_if(parse_state):
 def parse_while(parse_state):
     parse_state.matchKeyword("while")
     condition = parse_expr(parse_state)
-
     parse_state.matchKeyword("do")
     body = parse_block(parse_state)
 
@@ -213,7 +199,6 @@ def parse_assign(parse_state):
     identifier = tokenValue( parse_state.matchTokenType("identifier") )
     parse_state.matchSymbol("=")
     expression = parse_expr(parse_state)
-
     parse_state.matchSymbol(";")
 
     return Assign(identifier=identifier, expr_node=expression)
@@ -228,22 +213,20 @@ def parse_modifier(parse_state):
             parse_state.matchSymbol(";")
             return AssignOp(identifier=identifier, op=tv, expr_node=expr)
     
-    parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
+    parse_state.parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
 
 def parse_declare(parse_state):
     parse_state.matchKeyword("var")
-
     identifier = tokenValue( parse_state.matchTokenType("identifier") )
-
     parse_state.matchSymbol("=")
-
     expression = parse_expr(parse_state)
-
     parse_state.matchSymbol(";")
 
     return Declare(identifier=identifier, expr_node=expression)
 
-
+def binding_power(tok):
+    t = tokenValue(tok)
+    return precedence.get(t, -1)
 
 def parse_expr(parse_state, rbp = 0):
     left_expr = parse_primary(parse_state)
@@ -258,61 +241,13 @@ def parse_expr(parse_state, rbp = 0):
     
     return left_expr
 
-def parse_and_expr(parse_state):
-    left_expr = parse_comparison(parse_state)
-
-    if tokenValue(parse_state.currentToken()) == "&":
-        parse_state.matchSymbol("&")
-        right_expr = parse_and_expr(parse_state)
-        return BinaryOp(op="&", left_expr=left_expr, right_expr=right_expr)
-
-    return left_expr
-
-def parse_comparison(parse_state):
-    left_expr = parse_term(parse_state)
-    
-    tv = tokenValue(parse_state.currentToken())
-    if tv in ["==", "!=", "==", "<=", ">=", "<", ">"]:
-        parse_state.matchSymbol(tv)
-        right_expr = parse_comparison(parse_state)
-        return BinaryOp(op=tv, left_expr=left_expr, right_expr=right_expr)
-    else:
-        return left_expr
-
-def parse_term(parse_state):
-    left_expr = parse_factor(parse_state)
-
-    tv = tokenValue(parse_state.currentToken())
-    if tv in ["+", "-"]:
-        parse_state.matchSymbol(tv)
-        right_expr = parse_term(parse_state)
-        return BinaryOp(op=tv, left_expr=left_expr, right_expr=right_expr)
-    else:
-        return left_expr
-
-def parse_factor(parse_state):
-    left_expr = parse_unary(parse_state)
-
-    tv = tokenValue(parse_state.currentToken())
-    if tv in ["*", "/", "%"]:
-        parse_state.matchSymbol(tv)
-        right_expr = parse_factor(parse_state)
-        return BinaryOp(op=tv, left_expr=left_expr, right_expr=right_expr)
-    else:
-        return left_expr
-
 def parse_unary(parse_state):
     tv = tokenValue(parse_state.currentToken())
-    if tv in ["+", "-"]:
-        parse_state.matchSymbol(tv)
-        expr_node = parse_primary(parse_state)
-        return UnaryOp(op=tv, expr_node=expr_node)
-    return parse_primary(parse_state)
+    parse_state.matchSymbol(tv)
+    expr_node = parse_primary(parse_state)
+    return UnaryOp(op=tv, expr_node=expr_node)
 
 def parse_primary(parse_state):
-    '''
-    parse unary here instead?
-    '''
     ct = parse_state.currentToken()
 
     if tokenValue(ct) == "(":
@@ -328,8 +263,7 @@ def parse_primary(parse_state):
         identifier = tokenValue( parse_state.matchTokenType("identifier") )
         return VariableLookup(identifier=identifier)
 
-    # a little bit redundant, but works
-    if tokenValue(ct) in ["+", "-"]:
+    if tokenValue(ct) == "-":
         return parse_unary(parse_state)
 
     value, literal_type = parse_state.matchLiteral()
@@ -351,7 +285,6 @@ def parse_function_call(parse_state):
 def parse_expr_list(parse_state):
     expr = parse_expr(parse_state)
 
-    # of course this could be done iteratively, but if I'm gonna write a recusive descent parser I may as well commit to it
     if tokenValue( parse_state.currentToken() ) == ",":
         parse_state.matchSymbol(",")
         return [expr] + parse_expr_list(parse_state)
@@ -377,7 +310,6 @@ if __name__ == "__main__":
     _file = "../tests/tokens.txt"
     if len(args) > 0:
         _file = args[0]
-
 
     with open(_file, 'r') as file:
         data = file.read().replace('\n', '')
