@@ -56,13 +56,13 @@ def pretty_print(ts):
 def tuple_print( tokens ):
     print("[")
 
-    i = 0;
+    i = 0
     while i < (len(tokens) - 1):
         print("(\"%s\", \"%s\")," % (tokens[i][1], tokens[i][0]))
         i += 1
     print("(\"%s\", \"%s\")" % (tokens[i][1], tokens[i][0]))
 
-    print("]");
+    print("]")
 
 
 def is_id_char(c):
@@ -70,7 +70,7 @@ def is_id_char(c):
     return c.isalnum() or (c == "_")
 
 
-def lex_string(source):
+def lex_string(source, print_tokens=False):
     global keywords
     global symbols
     
@@ -134,7 +134,11 @@ def lex_string(source):
                 raise Exception("Invalid token start: " + source[i])
     
     #pretty_print(tokens)
-    tuple_print(tokens)
+    if print_tokens:
+        tuple_print(tokens)
+
+    # swap tuple order so that it works with the lexer and matches the order of the c++ lexer
+    return list( map(lambda t : (t[1], t[0]), tokens) )
                 
                  
 
@@ -149,8 +153,7 @@ if __name__ == "__main__":
         if len(args) == 0:
             raise SystemExit("Command mode requires at least one argument")
         else:
-            for arg in args:
-                lex_string(arg)
+            lex_string(' '.join(args), print_tokens=True)
     
     # otherwise read in a file and lex that
     else:

@@ -1,16 +1,29 @@
 
+
+
+
+def _compare_node_sequence( seq1, seq2 ):
+    ''' used by equals methods '''
+    return len(seq1) == len(seq2) and all( map(lambda t : t[0] == t[1], zip(seq1, seq2)) )
+    
 # AST node types
 class Node:
     def __init__(self):
         self.type = "none"
+
+    def children(self):
+        return []
     
+    def eq_type(self, other):
+        ''' used by the __eq__ method of subclasses '''
+        return type(self) == type(other) and self.type == other.type
+
 
 class Program(Node):
     def __init__(self):
         self.type = "Program"
         self.nodes = []
 
-    # consider removing
     def add_top_level_stmt(self, node):
         self.nodes.append( node )
 
@@ -23,12 +36,14 @@ class Program(Node):
     def __repr__(self):
         return repr(self.nodes)
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and _compare_node_sequence(self.nodes, other.nodes)
+
 class Block(Node):
     def __init__(self, stmts):
         self.type = "Block"
         self.stmts = stmts
 
-    # consider removing
     def add_stmt(self, node):
         self.stmts.append( node )
 
@@ -41,6 +56,9 @@ class Block(Node):
     def __repr__(self):
         return repr(self.stmts)
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and _compare_node_sequence(self.stmts, other.stmts)
+
 class Assign(Node):
     def __init__(self, identifier, expr_node):
         self.type = "Assign"
@@ -52,6 +70,9 @@ class Assign(Node):
 
     def children(self):
         return [self.expr_node]
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier and self.expr_node == other.expr_node
 
 class Declare(Node):
     def __init__(self, identifier, expr_node):
@@ -67,6 +88,9 @@ class Declare(Node):
 
     def __repr__(self):
         return "{} {} = \n{}".format(self.type, self.identifier, repr(self.expr_node))
+    
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier and self.expr_node == other.expr_node
 
 class FunctionDeclare(Node):
     def __init__(self, identifier, args, body):
@@ -81,6 +105,9 @@ class FunctionDeclare(Node):
     def children(self):
         return [self.body]
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier and self.args == other.args and self.body == other.body
+
 class Return(Node):
     def __init__(self, expr_node):
         self.type = "Return"
@@ -91,6 +118,9 @@ class Return(Node):
 
     def children(self):
         return [self.expr_node]
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.expr_node == other.expr_node
 
 class AssignOp(Node):
     def __init__(self, identifier, op, expr_node):
@@ -105,6 +135,9 @@ class AssignOp(Node):
     def children(self):
         return [self.expr_node]
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier and self.op == other.op and self.expr_node == other.expr_node
+
 class IfThen(Node):
     def __init__(self, condition, body):
         self.type = "IfThen"
@@ -116,6 +149,9 @@ class IfThen(Node):
 
     def children(self):
         return [self.condition] + [self.body]
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.condition == other.condition and self.then_body == other.then_body
 
 class IfElse(Node):
     def __init__(self, condition, then_body, else_body):
@@ -130,6 +166,9 @@ class IfElse(Node):
     def children(self):
         return [self.condition] + [self.then_body] + [self.else_body]
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.condition == other.condition and self.then_body == other.then_body and self.else_body == other.else_body
+
 class While(Node):
     def __init__(self, condition, body):
         self.type = "While"
@@ -141,6 +180,9 @@ class While(Node):
 
     def children(self):
         return [self.condition] + [self.body]
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.condition == other.condition and self.else_body == other.else_body
 
 class BinaryOp(Node):
     def __init__(self, op, left_expr, right_expr):
@@ -158,6 +200,9 @@ class BinaryOp(Node):
     def __repr__(self):
         return "({}\n left: {}\n right: {}\n)".format(self.op, self.left_expr, self.right_expr)
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.op == other.op and self.left_expr == other.left_expr and self.right_expr == other.right_expr
+
 class UnaryOp(Node):
     def __init__(self, op, expr_node):
         self.type = "UnaryOp"
@@ -173,6 +218,9 @@ class UnaryOp(Node):
     def __repr__(self):
         return "({}\n {})".format(self.op, self.expr_node)
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.op == other.op and self.expr_node == other.expr_node
+
 class FunctionCall(Node):
     def __init__(self, identifier, expr_args):
         self.type = "FunctionCall"
@@ -187,6 +235,9 @@ class FunctionCall(Node):
 
     def __str__(self):
         return "({}, {}, args: {})".format(self.type, self.identifier, str(self.expr_args))
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier and _compare_node_sequence(self.expr_args, other.expr_args)
     
 
 class VariableLookup(Node):
@@ -203,16 +254,22 @@ class VariableLookup(Node):
     def __str__(self):
         return "({}, {})".format(self.type, self.identifier)
 
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.identifier == other.identifier
+
 class Literal(Node):
     def __init__(self, literal_type, value):
-        self.literal_type = literal_type
+        self.type = literal_type
         self.literal_value = value
 
     def value(self):
-        return "{} {}".format(self.literal_type, self.literal_value)
+        return "{} \'{}\'".format(self.literal_type, self.literal_value)
 
     def children(self):
         return []
 
     def __str__(self):
         return "({}, {})".format(self.literal_value, self.literal_type)
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.literal_value == other.literal_value

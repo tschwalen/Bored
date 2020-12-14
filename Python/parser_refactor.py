@@ -73,11 +73,23 @@ def tokenValue(t):
 def tokenType(t):
     return t[1]
 
+# TODO: refactor
+def binding_power(tok):
+    t = tokenValue(tok)
+    bp = {
+        '|' : 1,
+        '&' : 1,
+        "==" : 3, "!=" : 3, "==" : 3, "<=" : 3, ">=" : 3, "<" : 3, ">" : 3,
+        "+" : 4, "-" : 4,
+        "*" : 5, "/" : 5, "%" : 5
+    }
+    return bp.get(t, -1)
+
 
 def parse_program(parse_state):
     ast_root = Program()
 
-    tv, tt = parse_state.currentToken()
+    tv, tt = parse_state.currentToken() # tokenvalue, tokentype
     while tt != "EOF":
         if tv == "var":
             ast_node = parse_declare(parse_state)
@@ -88,8 +100,6 @@ def parse_program(parse_state):
         else:
             parse_state.parse_error("Encountered unexpected token \'{}\' while parsing top-level statement".format(tv))
 
-
-        # might be unneeded
         tv, tt = parse_state.currentToken()
 
     return ast_root
@@ -233,17 +243,7 @@ def parse_declare(parse_state):
 
     return Declare(identifier=identifier, expr_node=expression)
 
-# this is tacked on and can definitely be handled in a better way
-def binding_power(tok):
-    t = tokenValue(tok)
-    bp = {
-        '|' : 1,
-        '&' : 1,
-        "==" : 3, "!=" : 3, "==" : 3, "<=" : 3, ">=" : 3, "<" : 3, ">" : 3,
-        "+" : 4, "-" : 4,
-        "*" : 5, "/" : 5, "%" : 5
-    }
-    return bp.get(t, -1)
+
 
 def parse_expr(parse_state, rbp = 0):
     left_expr = parse_primary(parse_state)
@@ -389,3 +389,81 @@ if __name__ == "__main__":
     ast = parse_program(parse_state)
 
     pretty_print_ast(ast)
+
+
+'''
+First built-ins
+
+Strings: immutable heterogenous char vector
+
+    var message = 'Similar to how they are in every language';
+    message[3]
+    >>> 'i'
+
+Heterogeneous vector : hevec:
+
+    var example = ['string', 445, [1, 2, 3]]
+
+    example[1] = 'different value';
+    example[2,2] = 4;
+    >>> ['string', 'different value', [1, 2, 4]]
+
+    * as name implies, can contain all different types and can be nested jaggedly
+    * us references, access time is slow and you lose out on spatial locality, but flexibility is improved
+
+Homogenous vector : hovec:
+
+    var num_example = <1, 2, 3>;
+    var two_dimensional = < <3, 3, 3>, <3, 0, 3> >
+
+    num_example[0]
+    >>> 1
+    two_dimensional[2, 1]
+    >>> 0
+
+    * homogenous vector -> contains all the same type
+    *                   -> can be nested, but cannot be jagged
+    *                   -> stored contiguously in memory
+
+-----------------Next step after above is implemented-------------------
+Everything here is tentative
+
+Associative Array : assarr
+
+decisions to make: 
+- syntax
+- Heterogeneous or homogenous type
+- implementation
+
+
+Classes, records, structs, etc.
+
+- Aggregate data types are extremely useful. 
+- What I'm thinking right now is to have something akin to C/C++ structs
+    - make class methods and constructors optional, so that you can easily make a struct/namedtuple data type
+    - but also make class methods and constructors syntactically pleasant so that object oriented code is easy to write
+
+- Inheritance/Polymorphism/Prototype rules
+    - I like how python does it
+
+
+
+
+'''
+
+'''
+Change AssignOp to have LValue instead of identifier member
+Make an LValue node, can be:
+|- an identifier
+|- an access expression. so an identifier (and maybe also an expression or primary later? foo()[bar] = ...?)
+    followed by a set of brackets with an expressionlist enclosed
+
+Add a some new logic to parse_primary:
+- parse access expressions, should be very similar to function calls
+- parse literals for homogenous and heterogenous vectors. We already have expressionlist parsing code
+    so adding this should be trivial
+
+Then just make sure to add nodes for the new types above.
+
+
+'''
