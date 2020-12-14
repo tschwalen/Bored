@@ -151,7 +151,7 @@ class IfThen(Node):
         return [self.condition] + [self.body]
 
     def __eq__( self, other ):
-        return self.eq_type(other) and self.condition == other.condition and self.then_body == other.then_body
+        return self.eq_type(other) and self.condition == other.condition and self.body == other.body
 
 class IfElse(Node):
     def __init__(self, condition, then_body, else_body):
@@ -182,7 +182,7 @@ class While(Node):
         return [self.condition] + [self.body]
 
     def __eq__( self, other ):
-        return self.eq_type(other) and self.condition == other.condition and self.else_body == other.else_body
+        return self.eq_type(other) and self.condition == other.condition and self.body == other.body
 
 class BinaryOp(Node):
     def __init__(self, op, left_expr, right_expr):
