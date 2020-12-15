@@ -124,11 +124,13 @@ def lex_string(source, print_tokens=False):
                 j = i + 2
                 if j <= len(source) and source[i : j] in multi.keys():
                     symbol = source[i : j]
-                    tokens.append( (multi[symbol], symbol) )
+                    #tokens.append( (multi[symbol], symbol) )
+                    tokens.append( ('symbol', symbol) )
                     i = j
                 else:
                     symbol = source[i : i+1]
-                    tokens.append( (symbols[symbol], symbol) )
+                    #tokens.append( (symbols[symbol], symbol) )
+                    tokens.append( ('symbol', symbol) )
                     i += 1
             else:
                 raise Exception("Invalid token start: " + source[i])
@@ -149,12 +151,15 @@ if __name__ == "__main__":
     args = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
 
     
-    if "-c" in opts:
+    if "-f" in opts:
         if len(args) == 0:
-            raise SystemExit("Command mode requires at least one argument")
+            raise SystemExit('Expected path to file')
+        else:
+            path_to_sourcefile = args[0]
+            with open (path_to_sourcefile, 'r') as sourcefile:
+                lex_string(''.join(sourcefile.readlines()), print_tokens=True)
+    else:
+        if len(args) == 0:
+            raise SystemExit('Command mode requires at least one argument')
         else:
             lex_string(' '.join(args), print_tokens=True)
-    
-    # otherwise read in a file and lex that
-    else:
-        pass
