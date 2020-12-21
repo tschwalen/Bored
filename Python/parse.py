@@ -6,7 +6,9 @@ class ParseState:
         self.tokens = tokens
         self.index = index
         self.error_fn = error_fn
-        print(" ".join([t[0] for t in tokens]))
+        #print(" ".join([t[0] for t in tokens]))
+        #print(tokens)
+
 
     def currentToken(self):
         if self.index >= len(self.tokens):
@@ -22,6 +24,7 @@ class ParseState:
     def advance(self):
         #print([t[0] for t in self.tokens[self.index:]])
         ct = self.currentToken()
+        #print('advanced past %s' % ct[0])
         self.index += 1
         return ct
 
@@ -34,6 +37,7 @@ class ParseState:
             self.parse_error("Expected keyword \'{}\', encountered \'{}\' with value \'{}\'.".format(kwrd, tt, tv))
 
     def matchTokenType(self, ttype):
+        #print('matchTokenType called with %s' % ttype)
         ct = self.currentToken()
         tv, tt = ct
         if tt == ttype:
@@ -149,7 +153,7 @@ def parse_statement(parse_state):
             return stmt
 
         if tv == "(":
-            stmt = parse_function_call(parse_state)
+            stmt = parse_primary(parse_state)
             parse_state.matchSymbol(";")
             return stmt
 
@@ -250,28 +254,40 @@ def parse_unary(parse_state):
 def parse_primary(parse_state):
     ct = parse_state.currentToken()
 
+    if tokenValue(ct) == "-":
+        return parse_unary(parse_state)
+
+    primary_expr = None
     if tokenValue(ct) == "(":
         parse_state.matchSymbol("(")
         parenthesized_expr = parse_expr(parse_state)
         parse_state.matchSymbol(")")
-        return parenthesized_expr
-
-    if tokenType(ct) == "identifier":
-        nt = parse_state.peekToken()
-        if tokenValue(nt) == "(":
-            return parse_function_call(parse_state)
+        primary_expr = parenthesized_expr
+    elif tokenType(ct) == "identifier":
         identifier = tokenValue( parse_state.matchTokenType("identifier") )
-        return VariableLookup(identifier=identifier)
+        primary_expr = VariableLookup(identifier=identifier)
 
-    if tokenValue(ct) == "-":
-        return parse_unary(parse_state)
+    if primary_expr != None:
+        ct = parse_state.currentToken()
+        while True:
+            if tokenValue(ct) == '(':
+                fn_call_args = parse_function_call(parse_state)
+                primary_expr = FunctionCall(callee=primary_expr, expr_args=fn_call_args)
+            elif tokenValue(ct) == '[':
+                parse_state.matchSymbol('[')
+                index_expr = parse_expr(parse_state)
+                parse_state.matchSymbol(']')
+                primary_expr = Access(left_expr=primary_expr, index_expr=index_expr)
+            else:
+                return primary_expr
+            ct = parse_state.currentToken()
+
 
     value, literal_type = parse_state.matchLiteral()
     return Literal(literal_type=literal_type, value=value)
 
 
 def parse_function_call(parse_state):
-    fn_name = tokenValue( parse_state.matchTokenType("identifier") )
     parse_state.matchSymbol("(")
 
     if tokenValue( parse_state.currentToken() ) == ")":
@@ -280,7 +296,7 @@ def parse_function_call(parse_state):
         expr_args = parse_expr_list(parse_state)
 
     parse_state.matchSymbol(")")
-    return FunctionCall(identifier=fn_name, expr_args=expr_args)
+    return expr_args
 
 def parse_expr_list(parse_state):
     expr = parse_expr(parse_state)
@@ -293,6 +309,8 @@ def parse_expr_list(parse_state):
     
 ### End of parsing code ###
 
+
+
 # adapted from https://vallentin.dev/2016/11/29/pretty-print-tree
 def pretty_print_ast(node, _prefix="", _last=True):
     print(_prefix, "`- " if _last else "|- ", node.value(), sep="" )
@@ -302,6 +320,12 @@ def pretty_print_ast(node, _prefix="", _last=True):
         _last = i == (child_count - 1)
         pretty_print_ast(child, _prefix, _last)
     
+
+def parse_tokens(tokens):
+    parse_state = ParseState(tokens)
+    ast = parse_program(parse_state)
+    pretty_print_ast(ast)
+    return ast
 
 if __name__ == "__main__":
     

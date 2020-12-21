@@ -93,6 +93,8 @@ def lex_string(source, print_tokens=False):
                 
                 if word in keywords:
                     tokens.append( ('keyword', word) )
+                elif word in ('true', 'false'):
+                    tokens.append( ('bool-literal', word))
                 else:
                     tokens.append( ('identifier', source[i : j]) )
                 i = j
@@ -143,6 +145,9 @@ def lex_string(source, print_tokens=False):
     return list( map(lambda t : (t[1], t[0]), tokens) )
                 
                  
+def lex_file(path):
+    with open (path, 'r') as sourcefile:
+        return lex_string(''.join(sourcefile.readlines()), print_tokens=False)
 
 
 if __name__ == "__main__":

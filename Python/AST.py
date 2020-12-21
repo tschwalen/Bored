@@ -222,23 +222,40 @@ class UnaryOp(Node):
         return self.eq_type(other) and self.op == other.op and self.expr_node == other.expr_node
 
 class FunctionCall(Node):
-    def __init__(self, identifier, expr_args):
+    def __init__(self, callee, expr_args):
         self.type = "FunctionCall"
-        self.identifier = identifier
+        self.callee = callee
         self.expr_args = expr_args
 
     def value(self):
-        return "{} {}".format(self.type, self.identifier)
+        return "{} callee args...".format(self.type, self.callee)
 
     def children(self):
-        return self.expr_args
+        return [self.callee] + self.expr_args
 
     def __str__(self):
-        return "({}, {}, args: {})".format(self.type, self.identifier, str(self.expr_args))
+        return "({}, {}, args: {})".format(self.type, self.callee, str(self.expr_args))
 
     def __eq__( self, other ):
-        return self.eq_type(other) and self.identifier == other.identifier and _compare_node_sequence(self.expr_args, other.expr_args)
+        return self.eq_type(other) and self.callee == other.callee and _compare_node_sequence(self.expr_args, other.expr_args)
     
+class Access(Node):
+    def __init__(self, left_expr, index_expr):
+        self.type = 'Access'
+        self.left_expr = left_expr
+        self.index_expr = index_expr
+
+    def value(self):
+        return "{} accessee index".format(self.type)
+
+    def children(self):
+        return [self.left_expr, self.index_expr]
+
+    def __str__(self):
+        return "({}, {}, {})".format(self.type, self.left_expr, self.index_expr)
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.left_expr == other.left_expr and self.index_expr == other.index_expr
 
 class VariableLookup(Node):
     def __init__(self, identifier):
@@ -263,13 +280,13 @@ class Literal(Node):
         self.literal_value = value
 
     def value(self):
-        return "{} \'{}\'".format(self.literal_type, self.literal_value)
+        return "{} \'{}\'".format(self.type, self.literal_value)
 
     def children(self):
         return []
 
     def __str__(self):
-        return "({}, {})".format(self.literal_value, self.literal_type)
+        return "({}, {})".format(self.literal_value, self.type)
 
     def __eq__( self, other ):
         return self.eq_type(other) and self.literal_value == other.literal_value
