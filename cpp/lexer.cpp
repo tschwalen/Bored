@@ -9,8 +9,7 @@
 
 std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
 std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":" } );
-std::unordered_set<std::string> maybe_multichar ( {"=", "!", ">", "<", "+", "-", "*", "/", "%"} );
-std::unordered_set<std::string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=" } );
+std::unordered_set<std::string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=", "<[", "]>" } );
 
 bool is_id_char(char c) {
     return isdigit(c) || isalpha(c) || c == '_';

@@ -1,1 +1,7 @@
 var subtraction = 5 - 4 - 3;
+
+var hmvec = <[ 1, 2, 3, 4, 5 ]>;
+
+var htvec = [1,2,3, [4,5] ];
+
+var two_dimensional = <[ <[3, 3, 3]>, <[3, 0, 3]> ]>;

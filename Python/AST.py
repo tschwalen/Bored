@@ -278,3 +278,18 @@ class Literal(Node):
 
     def __eq__( self, other ):
         return self.eq_type(other) and self.literal_value == other.literal_value
+
+class VectorLiteral(Node):
+    def __init__(self, vector_type, contents):
+        self.type = 'VectorLiteral'
+        self.vector_type = vector_type
+        self.contents = contents
+
+    def value(self):
+        return "{} {}".format(self.type, self.vector_type)
+
+    def children(self):
+        return self.contents
+
+    def __eq__( self, other ):
+        return self.eq_type(other) and self.vector_type == other.vector_type and _compare_node_sequence(self.contents, other.contents)

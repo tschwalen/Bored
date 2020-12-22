@@ -97,10 +97,10 @@ class TestAstEquality(unittest.TestCase):
         bo1 = BinaryOp('*', var1, num2)
         bo2 = BinaryOp('+', var1, num2)
 
-        self.assertEqual( Assign('foo', bo1), Assign('foo', bo1) )
+        self.assertEqual( AssignOp('foo', '=', bo1), AssignOp('foo', '=', bo1) )
         self.assertEqual( Declare('foo', num1), Declare('foo', num1) )
-        self.assertNotEqual( Assign('foo', bo1), Declare('foo', num1))
-        self.assertNotEqual( Assign('bar', bo1), Assign('foo', bo1) )
+        self.assertNotEqual( AssignOp('foo', '=', bo1), Declare('foo', num1))
+        self.assertNotEqual( AssignOp('bar', '=', bo1), AssignOp('foo', '=', bo1) )
     
     def test_control_flow(self):
         '''Also tests the AssignOp Node type '''
@@ -163,7 +163,7 @@ class TestAstEquality(unittest.TestCase):
         var2 = VariableLookup('mitya')
         bo1 = BinaryOp('*', var1, num2)
         bo2 = BinaryOp('+', var1, num2)
-        a1 = Assign('foo', bo1)
+        a1 = AssignOp('foo', '=', bo1)
         d1 = Declare('foo', num1)
 
         prgm1 = Program()

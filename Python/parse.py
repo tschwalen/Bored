@@ -193,21 +193,6 @@ def parse_while(parse_state):
 
     return While(condition=condition, body=body)
 
-# likely unneeded
-# def parse_lvalue(parse_state):
-
-#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
-#     primary_expr = VariableLookup(identifier=identifier)
-
-#     ct = parse_state.currentToken()
-#     while tokenValue(ct) == '[':
-#         parse_state.matchSymbol('[')
-#         index_expr = parse_expr(parse_state)
-#         parse_state.matchSymbol(']')
-#         primary_expr = Access(left_expr=primary_expr, index_expr=index_expr)
-#          ct = parse_state.currentToken()
-#     return primary_expr
-
 def parse_assignment(parse_state, lvalue):
     ''' parses assignment-type statements including modifiers (+=, -=, and so on)'''
 
@@ -222,27 +207,6 @@ def parse_assignment(parse_state, lvalue):
         return AssignOp(lvalue=lvalue, op=tv, expr_node=expr)
     else:
         parse_state.parse_error('Expected assignment operator, encountered %s' % tv)
-
-
-# def parse_assign(parse_state):
-#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
-#     parse_state.matchSymbol("=")
-#     expression = parse_expr(parse_state)
-#     parse_state.matchSymbol(";")
-
-#     return Assign(identifier=identifier, expr_node=expression)
-
-
-# def parse_modifier(parse_state):
-#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
-#     tv = tokenValue( parse_state.currentToken() )
-#     if tv in ["+=", "-=", "/=", "*=", "%="]:
-#             parse_state.matchSymbol(tv)
-#             expr = parse_expr(parse_state)
-#             parse_state.matchSymbol(";")
-#             return AssignOp(identifier=identifier, op=tv, expr_node=expr)
-    
-#     parse_state.parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
 
 def parse_declare(parse_state):
     parse_state.matchKeyword("var")
@@ -279,20 +243,35 @@ def parse_unary(parse_state):
 def parse_primary(parse_state):
     ct = parse_state.currentToken()
 
+    if tokenValue(ct) in ['[', '<[']:
+        ''' both hetvec and homvec are parsed the same way, since type enforcement doesn't happen until later'''
+        tv = tokenValue(ct)
+        parse_state.matchSymbol(tv)
+        vector_type, closing = {'[' : ('Heterogeneous', ']'), '<[' : ('Homogenous', ']>')}[tv]   # ugly line
+        vector_contents = parse_expr_list(parse_state)
+        parse_state.matchSymbol(closing)
+
+        return VectorLiteral(vector_type, vector_contents)
+
+
     if tokenValue(ct) == "-":
+        ''' unary minus '''
         return parse_unary(parse_state)
 
     primary_expr = None
     if tokenValue(ct) == "(":
+        ''' parenthesized expression '''
         parse_state.matchSymbol("(")
         parenthesized_expr = parse_expr(parse_state)
         parse_state.matchSymbol(")")
         primary_expr = parenthesized_expr
     elif tokenType(ct) == "identifier":
+        ''' parenthesized expression '''
         identifier = tokenValue( parse_state.matchTokenType("identifier") )
         primary_expr = VariableLookup(identifier=identifier)
 
     if primary_expr != None:
+        ''' both an identifier or a parenthesized expression could be followed by access brackets or fn call '''
         ct = parse_state.currentToken()
         while True:
             if tokenValue(ct) == '(':
@@ -307,7 +286,7 @@ def parse_primary(parse_state):
                 return primary_expr
             ct = parse_state.currentToken()
 
-
+    # if all else fails, we assume it's a literal
     value, literal_type = parse_state.matchLiteral()
     return Literal(literal_type=literal_type, value=value)
 
@@ -386,7 +365,7 @@ Heterogeneous vector : hevec:
     var example = ['string', 445, [1, 2, 3]]
 
     example[1] = 'different value';
-    example[2,2] = 4;
+    example[2][2] = 4;
     >>> ['string', 'different value', [1, 2, 4]]
 
     * as name implies, can contain all different types and can be nested jaggedly
@@ -394,8 +373,10 @@ Heterogeneous vector : hevec:
 
 Homogenous vector : hovec:
 
-    var num_example = <1, 2, 3>;
-    var two_dimensional = < <3, 3, 3>, <3, 0, 3> >
+    var num_example = <[1, 2, 3]>;
+    var two_dimensional = <[ <[3, 3, 3]>, <[3, 0, 3]> ]>
+
+
 
     num_example[0]
     >>> 1

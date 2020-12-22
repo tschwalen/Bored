@@ -31,10 +31,6 @@ symbols = {
     ":" : "colon"
 }
 
-maybe_multichar = {
-    "=", "!", ">", "<", "+", "-", "*", "/", "%"
-}
-
 multi = {
     "==" : "equals-equals",
     "!=" : "not-equals",
@@ -44,7 +40,9 @@ multi = {
     "-=" : "minus-equals",
     "*=" : "star-equals",
     "/=" : "slash-equals",
-    "%=" : "percent-equals"
+    "%=" : "percent-equals",
+    "<[" : "hmvec-open",
+    "]>" : "hmvec-close"
 }
 
 def pretty_print(ts):
@@ -126,7 +124,6 @@ def lex_string(source, print_tokens=False):
                 j = i + 2
                 if j <= len(source) and source[i : j] in multi.keys():
                     symbol = source[i : j]
-                    #tokens.append( (multi[symbol], symbol) )
                     tokens.append( ('symbol', symbol) )
                     i = j
                 else:
