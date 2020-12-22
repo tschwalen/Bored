@@ -1,0 +1,24 @@
+
+
+function max_array(array, length) {
+    var i = 1;
+    var max = array[0];
+
+    while i < length do {
+        var current = array[i];
+        if current > max then {
+            max = current;
+        }
+
+        i += 1;
+    }
+    return max;
+}
+
+function main() {
+    var array_one = [5, 7, 8, 3, 6, 20, 1];
+
+    var array_two = <[5, 7, 8, 3, 6, 30, 1]>;
+
+    return max_array(array_one, 7) + max_array(array_two, 7);
+}

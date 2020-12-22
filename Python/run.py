@@ -2,6 +2,7 @@ import sys
 
 import lexer
 import parse
+from ast_eval import eval_ast
 
 
 if __name__ == "__main__":
@@ -11,4 +12,5 @@ if __name__ == "__main__":
     path = args[0]
 
     tokens = lexer.lex_file(path)
-    parse.parse_tokens(tokens)
+    ast = parse.parse_tokens(tokens, True)
+    eval_ast(ast)

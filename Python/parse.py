@@ -325,10 +325,11 @@ def pretty_print_ast(node, _prefix="", _last=True):
         pretty_print_ast(child, _prefix, _last)
     
 
-def parse_tokens(tokens):
+def parse_tokens(tokens, printout=False):
     parse_state = ParseState(tokens)
     ast = parse_program(parse_state)
-    pretty_print_ast(ast)
+    if printout:
+        pretty_print_ast(ast)
     return ast
 
 if __name__ == "__main__":

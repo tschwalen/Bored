@@ -18,6 +18,9 @@ class Node:
         ''' used by the __eq__ method of subclasses '''
         return type(self) == type(other) and self.type == other.type
 
+    def eval(self):
+        return None
+
 
 class Program(Node):
     def __init__(self):
@@ -278,6 +281,7 @@ class Literal(Node):
 
     def __eq__( self, other ):
         return self.eq_type(other) and self.literal_value == other.literal_value
+
 
 class VectorLiteral(Node):
     def __init__(self, vector_type, contents):
