@@ -59,20 +59,23 @@ class Block(Node):
     def __eq__( self, other ):
         return self.eq_type(other) and _compare_node_sequence(self.stmts, other.stmts)
 
-class Assign(Node):
-    def __init__(self, identifier, expr_node):
-        self.type = "Assign"
-        self.identifier = identifier
+class AssignOp(Node):
+    def __init__(self, lvalue, op, expr_node):
+        self.type = "AssignOp"
+        self.lvalue = lvalue
+        self.op = op
         self.expr_node = expr_node
 
     def value(self):
-        return "{} {}".format(self.type, self.identifier)
+        return "{} {} LValue RValue".format(self.type, self.op)
 
     def children(self):
-        return [self.expr_node]
+        return [self.lvalue, self.expr_node]
 
     def __eq__( self, other ):
-        return self.eq_type(other) and self.identifier == other.identifier and self.expr_node == other.expr_node
+        return self.eq_type(other) and self.lvalue == other.lvalue and self.expr_node == other.expr_node and self.op == other.op
+
+
 
 class Declare(Node):
     def __init__(self, identifier, expr_node):
@@ -122,21 +125,6 @@ class Return(Node):
     def __eq__( self, other ):
         return self.eq_type(other) and self.expr_node == other.expr_node
 
-class AssignOp(Node):
-    def __init__(self, identifier, op, expr_node):
-        self.type = "AssignOp"
-        self.identifier = identifier
-        self.op = op
-        self.expr_node = expr_node
-
-    def value(self):
-        return "{} {} {}".format(self.type, self.identifier, self.op)
-
-    def children(self):
-        return [self.expr_node]
-
-    def __eq__( self, other ):
-        return self.eq_type(other) and self.identifier == other.identifier and self.op == other.op and self.expr_node == other.expr_node
 
 class IfThen(Node):
     def __init__(self, condition, body):

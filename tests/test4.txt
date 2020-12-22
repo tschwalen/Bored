@@ -1,0 +1,21 @@
+var z = fn_name(arg1, arg2);
+
+var z = fn_name(arg1, arg2)(arg3);
+
+var f = array[15][12];
+
+var x = returns_an_array_of_functions()[4](bing);
+
+var t = ((called()))(argo);
+
+function new_assignment() {
+    a = b;
+    
+    t[5 + z] = some - thing;
+
+    arr[5][7] = 8;
+
+    s[6] += 1;
+
+    bazinga();
+}

@@ -146,18 +146,12 @@ def parse_statement(parse_state):
     ct = parse_state.currentToken()
 
     if tokenType(ct) == "identifier":
-        nt = parse_state.peekToken()
-        tv = tokenValue(nt)
-        if tv == "=":
-            stmt = parse_assign(parse_state)
-            return stmt
-
-        if tv == "(":
-            stmt = parse_primary(parse_state)
-            parse_state.matchSymbol(";")
-            return stmt
-
-        return parse_modifier(parse_state)
+        lvalue = parse_primary(parse_state)
+        
+        if lvalue.type == 'FunctionCall':
+            parse_state.matchSymbol(';')
+            return lvalue
+        return parse_assignment(parse_state, lvalue)
 
     tv = tokenValue(ct)
     
@@ -199,25 +193,56 @@ def parse_while(parse_state):
 
     return While(condition=condition, body=body)
 
-def parse_assign(parse_state):
-    identifier = tokenValue( parse_state.matchTokenType("identifier") )
-    parse_state.matchSymbol("=")
-    expression = parse_expr(parse_state)
-    parse_state.matchSymbol(";")
+# likely unneeded
+# def parse_lvalue(parse_state):
 
-    return Assign(identifier=identifier, expr_node=expression)
+#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
+#     primary_expr = VariableLookup(identifier=identifier)
 
+#     ct = parse_state.currentToken()
+#     while tokenValue(ct) == '[':
+#         parse_state.matchSymbol('[')
+#         index_expr = parse_expr(parse_state)
+#         parse_state.matchSymbol(']')
+#         primary_expr = Access(left_expr=primary_expr, index_expr=index_expr)
+#          ct = parse_state.currentToken()
+#     return primary_expr
 
-def parse_modifier(parse_state):
-    identifier = tokenValue( parse_state.matchTokenType("identifier") )
+def parse_assignment(parse_state, lvalue):
+    ''' parses assignment-type statements including modifiers (+=, -=, and so on)'''
+
+    if lvalue.type not in {'VariableLookup', 'Access'}:
+        parse_state.parse_error('%s is not a valid L value.' % lvalue.type)
+
     tv = tokenValue( parse_state.currentToken() )
-    if tv in ["+=", "-=", "/=", "*=", "%="]:
-            parse_state.matchSymbol(tv)
-            expr = parse_expr(parse_state)
-            parse_state.matchSymbol(";")
-            return AssignOp(identifier=identifier, op=tv, expr_node=expr)
+    if tv in ["=", "+=", "-=", "/=", "*=", "%="]:
+        parse_state.matchSymbol(tv)
+        expr = parse_expr(parse_state)
+        parse_state.matchSymbol(";")
+        return AssignOp(lvalue=lvalue, op=tv, expr_node=expr)
+    else:
+        parse_state.parse_error('Expected assignment operator, encountered %s' % tv)
+
+
+# def parse_assign(parse_state):
+#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
+#     parse_state.matchSymbol("=")
+#     expression = parse_expr(parse_state)
+#     parse_state.matchSymbol(";")
+
+#     return Assign(identifier=identifier, expr_node=expression)
+
+
+# def parse_modifier(parse_state):
+#     identifier = tokenValue( parse_state.matchTokenType("identifier") )
+#     tv = tokenValue( parse_state.currentToken() )
+#     if tv in ["+=", "-=", "/=", "*=", "%="]:
+#             parse_state.matchSymbol(tv)
+#             expr = parse_expr(parse_state)
+#             parse_state.matchSymbol(";")
+#             return AssignOp(identifier=identifier, op=tv, expr_node=expr)
     
-    parse_state.parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
+#     parse_state.parse_error("Expected assignment, modifier, or function to follow identifier. Encountered {} {}".format(identifier, tv))
 
 def parse_declare(parse_state):
     parse_state.matchKeyword("var")
@@ -307,7 +332,7 @@ def parse_expr_list(parse_state):
 
     return [expr]
     
-### End of parsing code ###
+######################## End of parsing code ########################
 
 
 
