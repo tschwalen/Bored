@@ -19,3 +19,4 @@ function new_assignment() {
 
     bazinga();
 }
+

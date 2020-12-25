@@ -38,35 +38,40 @@ def eval_ast(prgm):
         result = call_function(lookup_value('main', symbol_table), [], symbol_table)
         print(result)
 
+
+def execute_print(args):
+    print(*args)
+
 def lookup(identifier, env):
+    if identifier in built_ins:
+        return ('built-in', identifier, ['args'], built_ins[identifier]), env
+    ogenv = env
     while env:
         value = env.get(identifier, None)
         if value != None:
             return value, env
         env = env.get('#parent', None)
-    raise Exception('Lookup of identifier %s failed' % identifier) 
+    raise Exception('Lookup of identifier %s failed in env %s' % (identifier, ogenv))
 
 def lookup_value(identifier, env):
-    ogenv = env
-    while env:
-        value = env.get(identifier, None)
-        if value != None:
-            return value
-        env = env.get('#parent', None)
-    raise Exception('Lookup of identifier %s failed in env %s' % (identifier, ogenv))
+    return lookup(identifier, env)[0]
 
 def eval_node(node, env):
     return visitor_table[node.type](node, env)
 
 def call_function(fn, args, env):
     ''' fn : ('function', <name>, <args>, <body>) '''
+    if fn[0] == 'built-in':
+        return fn[3](args)
+
     body = fn[3]
     fn_env = {arg_name : arg_value for arg_name, arg_value in zip(fn[2], args)}
     fn_env['#parent'] = symbol_table # could change this to add closures later, not sure if I want to though
 
-    # allows for recursion
-    if fn[1] != 'main':
-        fn_env[fn[1]] = fn
+    # allows for recursion (actually, not needed until/unless 1st class functions are implemented)
+    # if fn[1] != 'main':
+    #     fn_env[fn[1]] = fn
+
 
     return eval_node(body, fn_env)[0]
 
@@ -120,17 +125,20 @@ def eval_block(node, env):
         v = eval_node(stmt, local_env)
         if type(v) == tuple and v[1] == 'return':
             return v
+    return (None, 'Nothing')
 
 def eval_return(node, env):
     return eval_node(node.expr_node, env), 'return'
 
 def eval_while(node, env):
     while eval_node(node.condition, env):
-        return eval_node(node.body, env)
+        result = eval_node(node.body, env)
+        if result[1] == 'return':
+            return result
 
 def eval_if_else(node, env):
     if eval_node(node.condition, env):
-        eval_node(node.then_body, env)
+        return eval_node(node.then_body, env)
     else:
         return eval_node(node.else_body, env)
 
@@ -205,5 +213,13 @@ visitor_table = {
     'Declare' : eval_declare,
     'AssignOp' : eval_assignop,
     'Block' : eval_block
+}
 
+built_ins = {
+    'print' : execute_print,
+    'printf': None,
+    'println': None,
+    'size' : None,
+    'hevec': None,
+    'hovec': None
 }

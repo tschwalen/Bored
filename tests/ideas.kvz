@@ -1,0 +1,31 @@
+
+~ some new ideas
+~ first of is line commends starting with '~'
+
+~~ 
+    And maybe multiline comments with double '~'
+~~
+
+~ considering adding 'auto' and 'const' keywords
+
+~ also built-in functions for declaring lists of a certain size (and later type)
+
+auto heterogeneous_vector = hevec(4); ~ -> [Nothing, Nothing, Nothing, Nothing]
+auto homogenous_vector = hovec(int, 3, 3); ~ -> <[<[0,0,0]>, <[0,0,0]>, <[0,0,0]>]>
+const SURNAMES = <['Smith', 'Brown', 'Baker', 'Miller']>;
+
+~~ Another idea I have is a sigil to explicitly denote references to global scope, no matter where the reference is made
+
+var counter = 0;
+
+function do_something( delta ) {
+    if delta % 2 == 0 then {
+        var counter = 0;
+        while counter < 10 do {
+            if delta % counter == 0 then {
+                ~ the sigil makes the interpreter/compiler look for 'counter' in the global scope
+                $counter += 1;
+            } 
+        }
+    }
+}

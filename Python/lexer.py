@@ -28,7 +28,8 @@ symbols = {
     "&" : "and", 
     "|" : "or",
     ";" : "semicolon",
-    ":" : "colon"
+    ":" : "colon",
+    "$" : "sigil"
 }
 
 multi = {

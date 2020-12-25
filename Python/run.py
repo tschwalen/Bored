@@ -12,5 +12,5 @@ if __name__ == "__main__":
     path = args[0]
 
     tokens = lexer.lex_file(path)
-    ast = parse.parse_tokens(tokens, True)
+    ast = parse.parse_tokens(tokens, False)
     eval_ast(ast)
