@@ -145,7 +145,7 @@ def parse_block(parse_state):
 def parse_statement(parse_state):
     ct = parse_state.currentToken()
 
-    if tokenType(ct) == "identifier":
+    if tokenType(ct) == "identifier" or tokenValue(ct) == '$':
         lvalue = parse_primary(parse_state)
         
         if lvalue.type == 'FunctionCall':
@@ -266,9 +266,15 @@ def parse_primary(parse_state):
         parse_state.matchSymbol(")")
         primary_expr = parenthesized_expr
     elif tokenType(ct) == "identifier":
-        ''' parenthesized expression '''
+        ''' identifier '''
         identifier = tokenValue( parse_state.matchTokenType("identifier") )
         primary_expr = VariableLookup(identifier=identifier)
+    elif tokenValue(ct) == "$":
+        ''' sigiled identifier '''
+        parse_state.matchSymbol("$")
+        identifier = tokenValue( parse_state.matchTokenType("identifier") )
+        primary_expr = VariableLookup(identifier=identifier, sigil=True)
+
 
     if primary_expr != None:
         ''' both an identifier or a parenthesized expression could be followed by access brackets or fn call '''

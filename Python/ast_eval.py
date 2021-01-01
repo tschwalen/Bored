@@ -4,7 +4,7 @@ import operator as op
 
 
 
-symbol_table = {}
+
 
 op_table = {
     '+'  : op.add, 
@@ -27,20 +27,18 @@ unary_op_table = {
     '!' : lambda x: not x
 }
 
-def eval_ast(prgm):
-    global symbol_table
 
-    if prgm.type == 'Program':
-
-        for node in prgm.nodes:
-            eval_node(node, symbol_table)
-
-        result = call_function(lookup_value('main', symbol_table), [], symbol_table)
-        print(result)
-
+######### Built-in function executors ##########
 
 def execute_print(args):
     print(*args)
+
+def execute_length(args):
+    assert len(args) == 1
+    return len(args[0])
+
+############ Symbol Table (env) Operations ############
+
 
 def lookup(identifier, env):
     if identifier in built_ins:
@@ -55,6 +53,22 @@ def lookup(identifier, env):
 
 def lookup_value(identifier, env):
     return lookup(identifier, env)[0]
+
+############## Interpreter Evaluation Code ##############
+
+symbol_table = {} # starting global symbol table or environment
+
+def eval_ast(prgm):
+    global symbol_table
+
+    if prgm.type == 'Program':
+
+        for node in prgm.nodes:
+            eval_node(node, symbol_table)
+
+        result = call_function(lookup_value('main', symbol_table), [], symbol_table)
+        print(result)
+
 
 def eval_node(node, env):
     return visitor_table[node.type](node, env)
@@ -113,6 +127,7 @@ def eval_fn_declare(node, env):
 def eval_lvalue(node, env):
     if node.type == 'VariableLookup':
         index = node.identifier
+        env = symbol_table if node.sigil else env
         value, env = lookup(index, env)
         return env, index, value
     item = eval_node(node.left_expr, env)
@@ -147,6 +162,7 @@ def eval_if_then(node, env):
         return eval_node(node.body, env)
 
 def eval_var_lookup(node, env):
+    env = symbol_table if node.sigil else env
     return lookup_value(node.identifier, env)
 
 def eval_access(node, env):
@@ -219,7 +235,7 @@ built_ins = {
     'print' : execute_print,
     'printf': None,
     'println': None,
-    'size' : None,
+    'lengthof' : execute_length,
     'hevec': None,
     'hovec': None
 }

@@ -1,0 +1,9 @@
+
+var counter = 0;
+
+function main( ) {
+    var counter = 5;
+    print($counter);
+    $counter += 1;
+    print($counter);
+}

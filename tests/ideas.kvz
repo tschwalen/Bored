@@ -19,13 +19,8 @@ const SURNAMES = <['Smith', 'Brown', 'Baker', 'Miller']>;
 var counter = 0;
 
 function do_something( delta ) {
-    if delta % 2 == 0 then {
-        var counter = 0;
-        while counter < 10 do {
-            if delta % counter == 0 then {
-                ~ the sigil makes the interpreter/compiler look for 'counter' in the global scope
-                $counter += 1;
-            } 
-        }
-    }
+    var counter = 5;
+    print($counter);
+    $counter += 1;
+    print($counter);
 }

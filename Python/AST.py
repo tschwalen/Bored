@@ -246,12 +246,13 @@ class Access(Node):
         return self.eq_type(other) and self.left_expr == other.left_expr and self.index_expr == other.index_expr
 
 class VariableLookup(Node):
-    def __init__(self, identifier):
+    def __init__(self, identifier, sigil=False):
         self.type = "VariableLookup"
         self.identifier = identifier
+        self.sigil = sigil
 
     def value(self):
-        return "{} {}".format(self.type, self.identifier)
+        return "{} {}{}".format(self.type, '$' if self.sigil else '', self.identifier)
 
     def children(self):
         return []
@@ -278,7 +279,6 @@ class Literal(Node):
 
     def __eq__( self, other ):
         return self.eq_type(other) and self.literal_value == other.literal_value
-
 
 class VectorLiteral(Node):
     def __init__(self, vector_type, contents):
