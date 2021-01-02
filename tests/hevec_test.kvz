@@ -1,0 +1,12 @@
+
+function main() {
+    var vector = hevec(12, 1); 
+
+    var i = 2; 
+    while i < lengthof(vector) 
+    do {
+        vector[i] = vector[i - 1] + vector[i - 2];
+        i += 1;
+    }
+    print(vector);
+}

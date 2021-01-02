@@ -37,6 +37,17 @@ def execute_length(args):
     assert len(args) == 1
     return len(args[0])
 
+def execute_hevec(args):
+    ''' 
+    args : (size, default_value=None) 
+    returns : heterogeneous vector of size <size> with every index containing <default_value>
+    '''
+
+    assert len(args) > 0 and len(args) < 3
+    if len(args) == 1:
+        return [None] * args[0]
+    return [args[1]] * args[0]
+
 ############ Symbol Table (env) Operations ############
 
 
@@ -67,7 +78,7 @@ def eval_ast(prgm):
             eval_node(node, symbol_table)
 
         result = call_function(lookup_value('main', symbol_table), [], symbol_table)
-        print(result)
+        #print(result)
 
 
 def eval_node(node, env):
@@ -236,6 +247,6 @@ built_ins = {
     'printf': None,
     'println': None,
     'lengthof' : execute_length,
-    'hevec': None,
+    'hevec': execute_hevec,
     'hovec': None
 }

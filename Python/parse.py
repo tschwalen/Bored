@@ -254,8 +254,8 @@ def parse_primary(parse_state):
         return VectorLiteral(vector_type, vector_contents)
 
 
-    if tokenValue(ct) == "-":
-        ''' unary minus '''
+    if tokenValue(ct) in "-!":
+        ''' unary minus and not'''
         return parse_unary(parse_state)
 
     primary_expr = None

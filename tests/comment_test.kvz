@@ -1,0 +1,19 @@
+
+
+function return_hello() {
+    ~ return 'something else'; 
+
+    ~~
+    var x = 4;
+    while x < 100 do {
+        print(x);
+        x += 1;
+    }
+    ~~
+
+    return 'hello';
+}
+
+function main() {
+    print(return_hello());
+}

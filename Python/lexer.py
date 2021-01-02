@@ -70,8 +70,6 @@ def is_id_char(c):
 
 
 def lex_string(source, print_tokens=False):
-    global keywords
-    global symbols
     
     tokens = []
     i = 0
@@ -98,6 +96,7 @@ def lex_string(source, print_tokens=False):
                     tokens.append( ('identifier', source[i : j]) )
                 i = j
             
+            # integer and real (float) literals
             elif source[i].isnumeric():
                 j = i + 1
                 while j < len(source) and source[j].isnumeric():
@@ -112,6 +111,7 @@ def lex_string(source, print_tokens=False):
                     tokens.append( ('int-literal', source[i : j]) )
                     i = j
 
+            # strings
             elif source[i] in "\'\"":
                 quote = source[i]
                 j = i + 1
@@ -120,8 +120,8 @@ def lex_string(source, print_tokens=False):
                 tokens.append( ('string-literal', source[ i + 1 : j ]) )
                 i = j + 1
 
-            elif source[i] in symbols.keys():
-                
+            # operators and other symbols
+            elif source[i] in symbols.keys():    
                 j = i + 2
                 if j <= len(source) and source[i : j] in multi.keys():
                     symbol = source[i : j]
@@ -132,6 +132,21 @@ def lex_string(source, print_tokens=False):
                     #tokens.append( (symbols[symbol], symbol) )
                     tokens.append( ('symbol', symbol) )
                     i += 1
+
+            # comments
+            elif source[i] == '~':
+                j = i + 1
+                if source[j] == '~':
+                    # multiline comment
+                    j += 1
+                    while source[j : j + 2] != '~~':
+                        j += 1
+                    i = j + 2
+                else:
+                    while source[j] != '\n':
+                        j += 1
+                    i = j
+
             else:
                 raise Exception("Invalid token start: " + source[i])
     
