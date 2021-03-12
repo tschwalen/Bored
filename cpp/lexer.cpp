@@ -102,6 +102,23 @@ std::vector<Token> lex_string ( std::string &source ) {
                 }
                 tokens.push_back(token);
             }
+            else if ( source[index] == '~' ) {
+                int comment_index = index + 1;
+                if ( source[comment_index] == '~' ) {
+                    // multiline comment
+                    ++comment_index;
+                    while (source.substr(comment_index, 2) != "~~") {
+                        ++comment_index;
+                    }
+                    index = comment_index + 2;
+                }
+                else {
+                    while ( source[comment_index] != '\n' ) {
+                        comment_index += 1;
+                    }
+                    index = comment_index;
+                }
+            }
             else {
                 printf("Invalid start of token %c\n", source[index]);
                 break;
@@ -148,9 +165,7 @@ int main( int argc, const char* argv[] ) {
             source.assign( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) );
         } 
 
-
         std::vector<Token> tokens = lex_string(source);
-
         tuple_print(tokens);
     }
     return 0;
