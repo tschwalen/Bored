@@ -2,10 +2,6 @@
 from AST import *
 import operator as op
 
-
-
-
-
 op_table = {
     '+'  : op.add, 
     '-'  : op.sub, 

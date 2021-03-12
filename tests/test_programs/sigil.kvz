@@ -6,4 +6,7 @@ function main( ) {
     print($counter);
     $counter += 1;
     print($counter);
+
+    counter = $counter + counter;
+    print(counter);
 }

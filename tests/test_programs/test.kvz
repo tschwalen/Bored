@@ -1,11 +1,13 @@
 
-function do_something1 (n) {
+function do_something (n) {
     return (n - 1) * (n - 1);
 }
 
 function main () {
     var x = 5.0;
-    do_something(x);
+    print (   
+        do_something(x)
+    );
 }
 
 function greatest_common_factor (a, b) {   

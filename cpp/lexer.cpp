@@ -1,23 +1,21 @@
+#include "lexer.h"
+#include "token.h"
 #include <stdio.h>
 #include <ctype.h>
-#include <vector> 
-#include <string>
 #include <fstream>
 #include <unordered_set> 
 
-
-
 std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
-std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":" } );
+std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":", "$"  } );
 std::unordered_set<std::string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=", "<[", "]>" } );
 
 bool is_id_char(char c) {
     return isdigit(c) || isalpha(c) || c == '_';
 }
 
-std::vector<std::pair<std::string, std::string>> lex_string ( std::string &source ) {
+std::vector<Token> lex_string ( std::string &source ) {
 
-    std::vector<std::pair<std::string, std::string>> tokens;
+    std::vector<Token> tokens;
     int index = 0;
 
     while ( index < source.size() ) {
@@ -29,7 +27,6 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
             }
         }
         else {
-
             // identifiers and keywords (reserved words)
             if ( isalpha(source[index]) || source[index] == '_' ) {
                 int end = index + 1;
@@ -39,17 +36,17 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                     ++end;
                 }
                 std::string word = source.substr(index, end - index);
-                std::pair<std::string, std::string> token;
+                Token token;
 
-                // unordered_set.contains() only came out in c++20
+                // unordered_set.contains() only came out in c++20, so count > 0 is a less-readable way to check set membership
                 if ( keywords.count(word) > 0 ) {
-                    token = std::make_pair( word, "keyword" ); 
+                    token = Token { word, keyword };
                 }
                 else if (word == "true" || word == "false") {
-                    token = std::make_pair( word, "bool-literal" );
+                    token = Token { word, bool_literal };
                 }
                 else {
-                    token = std::make_pair( word, "identifier" );
+                    token = Token { word, identifier };
                 }
                 tokens.push_back(token);
                 index = end;
@@ -61,7 +58,7 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                 while ( end < source.size() && isdigit(source[end]) ) {
                     ++end;
                 }
-                std::pair<std::string, std::string> token;
+                Token token;
 
                 if ( source[end] == '.' ) {
                     ++end;
@@ -69,11 +66,11 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                         ++end;
                     }
                     std::string real = source.substr(index, end - index);
-                    token = std::make_pair(real, "real-literal");
+                    token = Token { real, real_literal };
                 }
                 else {
                     std::string integer = source.substr(index, end - index);
-                    token = std::make_pair(integer, "int-literal");
+                    token = Token { integer, int_literal };
                 }
                 tokens.push_back(token);
                 index = end;
@@ -85,22 +82,22 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
                 while ( end < source.size() && source[end] != quote ) {
                     ++end;
                 }
-                std::string string_literal = source.substr(index + 1, end - (index + 1));
-                std::pair<std::string, std::string> token = std::make_pair(string_literal, "string-literal");
+                std::string string_value = source.substr(index + 1, end - (index + 1));
+                Token token = Token { string_value, string_literal };
                 tokens.push_back(token);
                 index = end + 1;
             }
             // symbols and operators
             else if (symbols.count(std::string(1, source[index])) > 0) {
                 int end = index + 2;
-                std::pair<std::string, std::string> token;
+                Token token;
                 if ( end <= source.size() && ( multi.count(source.substr(index, end - index)) > 0) ) {
-                    std::string symbol = source.substr(index, end - index);
-                    token = std::make_pair(symbol, "symbol");
+                    std::string symbol_value = source.substr(index, end - index);
+                    token = Token { symbol_value, symbol };
                     index = end;
                 }
                 else {
-                    token = std::make_pair(std::string(1, source[index]), "symbol");
+                    token =  Token { std::string(1, source[index]), symbol };
                     ++index;
                 }
                 tokens.push_back(token);
@@ -115,27 +112,25 @@ std::vector<std::pair<std::string, std::string>> lex_string ( std::string &sourc
     return tokens;
 }
 
-void pretty_print( std::vector<std::pair<std::string, std::string>> &tokens) {
+void pretty_print( std::vector<Token> &tokens ) {
     printf("[\n");
-
     for (int i = 0; i < tokens.size(); ++i) {
-        const char* token = tokens[i].first.c_str();
-        const char* token_type = tokens[i].second.c_str();
+        const char* token = tokens[i].sval.c_str();
+        const char* token_type = tokenTypeString( tokens[i].type).c_str();
         printf("%s : %s\n", token, token_type);
     }
-
     printf("]\n");
 }
 
-void tuple_print( std::vector<std::pair<std::string, std::string>> &tokens ) {
+void tuple_print( std::vector<Token> &tokens ) {
     printf("[\n");
 
     int i = 0;
     while (i < tokens.size() - 1) {
-        printf("(\"%s\", \"%s\"),\n", tokens[i].first.c_str(), tokens[i].second.c_str());
+        printf("(\"%s\", \"%s\"),\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
         ++i;
     }
-    printf("(\"%s\", \"%s\")\n", tokens[i].first.c_str(), tokens[i].second.c_str());
+    printf("(\"%s\", \"%s\")\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
 
     printf("]\n");
 }
@@ -154,7 +149,7 @@ int main( int argc, const char* argv[] ) {
         } 
 
 
-        std::vector<std::pair<std::string, std::string>> tokens = lex_string(source);
+        std::vector<Token> tokens = lex_string(source);
 
         tuple_print(tokens);
     }

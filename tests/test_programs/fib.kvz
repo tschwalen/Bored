@@ -8,5 +8,8 @@ function fibonacci ( n )
 
 function main()
 {
-    return <[fibonacci(0), fibonacci(1), fibonacci(2), fibonacci(6)]>;
+    var i = 0; while i < 12 do {
+        print( fibonacci (i) );
+        i += 1;
+    }
 }
