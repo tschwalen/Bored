@@ -27,7 +27,11 @@ std::vector<Token> lex_string ( std::string &source ) {
             }
         }
         else {
-            // identifiers and keywords (reserved words)
+            /*
+            *
+            *   Handle identifiers and reserved words
+            *
+            */
             if ( isalpha(source[index]) || source[index] == '_' ) {
                 int end = index + 1;
 
@@ -51,7 +55,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                 tokens.push_back(token);
                 index = end;
             }
-            // integers and real numbers (floating point)
+            /*
+            *
+            *   Handle numeric literals (ints & floats)
+            *
+            */
             else if ( isdigit(source[index]) ) {
                 int end = index + 1;
 
@@ -75,7 +83,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                 tokens.push_back(token);
                 index = end;
             }
-            // string literals
+            /*
+            *
+            *   Handle single and double-quoted strings
+            *
+            */
             else if ( source[index] == '\"' || source[index] == '\'' ) {
                 char quote = source[index];
                 int end = index + 1;
@@ -87,7 +99,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                 tokens.push_back(token);
                 index = end + 1;
             }
-            // symbols and operators
+            /*
+            *
+            *   Handle operators and other punctuation-based symbols
+            *
+            */
             else if (symbols.count(std::string(1, source[index])) > 0) {
                 int end = index + 2;
                 Token token;
@@ -102,6 +118,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                 }
                 tokens.push_back(token);
             }
+            /*
+            *
+            *   Handle single and multiline comments
+            *
+            */
             else if ( source[index] == '~' ) {
                 int comment_index = index + 1;
                 if ( source[comment_index] == '~' ) {
@@ -120,6 +141,7 @@ std::vector<Token> lex_string ( std::string &source ) {
                 }
             }
             else {
+                // not even going to think about error recovery
                 printf("Invalid start of token %c\n", source[index]);
                 break;
             }
@@ -141,25 +163,25 @@ void pretty_print( std::vector<Token> &tokens ) {
 
 void tuple_print( std::vector<Token> &tokens ) {
     printf("[\n");
-
     int i = 0;
     while (i < tokens.size() - 1) {
         printf("(\"%s\", \"%s\"),\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
         ++i;
     }
     printf("(\"%s\", \"%s\")\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
-
     printf("]\n");
 }
 
 
 int main( int argc, const char* argv[] ) {
-    // for now just take an argument string and tokenize it, worry about file IO later
     if( argc > 1 ) {
         std::string source = argv[1];
 
         // if file flag is used, read from file instead 
         if( source == "-f" && argc > 2 ) {
+            /* at some point, should read files in chunks since in practice putting a whole file in memory could
+            *  get impractical.
+            */
             std::string source_file = argv[2];
             std::ifstream ifs(source_file);
             source.assign( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) );
