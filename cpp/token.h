@@ -9,7 +9,8 @@ enum TokenType {
     bool_literal,
     int_literal,
     real_literal,
-    string_literal
+    string_literal,
+    eof
 };
 
 struct Token {
