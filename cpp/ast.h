@@ -131,7 +131,7 @@ private:
 
 public:
     FunctionDeclare (std::string identifier_, std::vector<std::string> args_, std::shared_ptr<BaseNode> body_) 
-        : identifier { identifier_ }, args { args_ }, body { body_ } {} 
+        : identifier { identifier_ }, args { std::move(args_) }, body { body_ } {} 
     
     virtual NodeType type() override { return NodeType::FunctionDeclare; }
     virtual std::string value() override { return std::string{"FunctionDeclare " + identifier + " with " + arg_list_to_string()}; }
@@ -183,7 +183,7 @@ private:
     std::shared_ptr<BaseNode> then_body;
     std::shared_ptr<BaseNode> else_body;
 public:
-    IfThen (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> then_body_, std::shared_ptr<BaseNode> else_body_)
+    IfElse (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> then_body_, std::shared_ptr<BaseNode> else_body_)
         : condition {condition_}, then_body { then_body_ }, else_body { else_body_ } {}
 
     virtual NodeType type() override { return NodeType::IfElse; }
@@ -252,7 +252,7 @@ private:
 
 public:
     FunctionCall (std::shared_ptr<BaseNode> callee_, std::vector<std::shared_ptr<BaseNode>> expr_args_)
-        : callee { callee_ }, expr_args {expr_args_} {}
+        : callee { callee_ }, expr_args { std::move(expr_args_) } {}
 
     virtual NodeType type() override { return NodeType::FunctionCall; }
     virtual std::string value() override { return std::string{"FunctionCall callee args... "}; }
@@ -365,14 +365,14 @@ public:
 class VectorLiteral : public BaseNode
 {
 private:
-    std::vector<BaseNode> contents;
+    std::vector<std::shared_ptr<BaseNode>> contents;
 public:
-    VectorLiteral (std::vector<BaseNode> literal_value_)
-        : literal_value { literal_value_ } {}
+    VectorLiteral (std::vector<std::shared_ptr<BaseNode>> contents_)
+        : contents { std::move(contents_) } {}
 
     virtual NodeType type() override { return NodeType::VectorLiteral; }
     virtual std::string value() override { return std::string{ "VectorLiteral" }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
-        return self.contents;
+        return contents;
     }
 };
