@@ -1,4 +1,5 @@
 #pragma once
+#include "asteval.h"
 #include <vector>
 #include <string>
 #include <memory> 
@@ -79,11 +80,8 @@ private:
         children() function is only used for testing/debugging of the parser.
     */
 public:
-    AssignOp(std::shared_ptr<BaseNode> left_value, std::string oper, std::shared_ptr<BaseNode> expression_node) {
-        lvalue = left_value;
-        op = oper;
-        expr_node = expression_node;
-    }
+    AssignOp(std::shared_ptr<BaseNode> lvalue_, std::string op_, std::shared_ptr<BaseNode> expr_node_)
+        : lvalue { lvalue_ }, op { op_ }, expr_node { expr_node_ } {}
 
     virtual NodeType type() override { return NodeType::AssignOp; }
     virtual std::string value() override { return std::string{"AssignOp " + op + "LValue RValue"}; }
@@ -100,10 +98,8 @@ private:
     std::shared_ptr<BaseNode> expr_node;
 
 public:
-    Declare(std::string id, std::shared_ptr<BaseNode> expression_node) {
-        identifier = id;
-        expr_node = expression_node;
-    }
+    Declare(std::string identifier_, std::shared_ptr<BaseNode> expr_node_)
+        : identifier { identifier_ }, expr_node {expr_node_} {}
 
     virtual NodeType type() override { return NodeType::Declare; }
     virtual std::string value() override { return std::string{"Declare " + identifier}; }
@@ -134,11 +130,9 @@ private:
     }
 
 public:
-    FunctionDeclare (std::string id, std::vector<std::string> &argslist, std::shared_ptr<BaseNode> fnbody) {
-        identifier = id;
-        args = argslist;
-        body = fnbody; 
-    }
+    FunctionDeclare (std::string identifier_, std::vector<std::string> args_, std::shared_ptr<BaseNode> body_) 
+        : identifier { identifier_ }, args { args_ }, body { body_ } {} 
+    
     virtual NodeType type() override { return NodeType::FunctionDeclare; }
     virtual std::string value() override { return std::string{"FunctionDeclare " + identifier + " with " + arg_list_to_string()}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -154,9 +148,8 @@ private:
     std::shared_ptr<BaseNode> expr_node;
 
 public:
-    Return(std::shared_ptr<BaseNode> expression_node) {
-        expr_node = expression_node;
-    }
+    Return (std::shared_ptr<BaseNode> expr_node_) 
+        : expr_node { expr_node_ } {}
 
     virtual NodeType type() override { return NodeType::Return; }
     virtual std::string value() override { return std::string{"Return"}; }
@@ -172,6 +165,9 @@ private:
     std::shared_ptr<BaseNode> condition;
     std::shared_ptr<BaseNode> body;
 public:
+    IfThen (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> body_)
+        : condition {condition_}, body { body_ } {}
+
     virtual NodeType type() override { return NodeType::IfThen; }
     virtual std::string value() override { return std::string{"If Then"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -187,6 +183,9 @@ private:
     std::shared_ptr<BaseNode> then_body;
     std::shared_ptr<BaseNode> else_body;
 public:
+    IfThen (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> then_body_, std::shared_ptr<BaseNode> else_body_)
+        : condition {condition_}, then_body { then_body_ }, else_body { else_body_ } {}
+
     virtual NodeType type() override { return NodeType::IfElse; }
     virtual std::string value() override { return std::string{"If Else"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -200,6 +199,8 @@ private:
     std::shared_ptr<BaseNode> condition;
     std::shared_ptr<BaseNode> body;
 public:
+    While (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> body_)
+            : condition {condition_}, body { body_ } {}
     virtual NodeType type() override { return NodeType::While; }
     virtual std::string value() override { return std::string{"While do"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -215,6 +216,9 @@ private:
     std::shared_ptr<BaseNode> left_expr;
     std::shared_ptr<BaseNode> right_expr;
 public:
+    BinaryOp (std::string op_, std::shared_ptr<BaseNode> left_expr_, std::shared_ptr<BaseNode> right_expr_)
+        : op { op_ }, left_expr {left_expr_}, right_expr {right_expr_} {}
+
     virtual NodeType type() override { return NodeType::BinaryOp; }
     virtual std::string value() override { return std::string{"BinaryOp " + op}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -229,6 +233,9 @@ private:
     std::string op; // TODO: replace with enum
     std::shared_ptr<BaseNode> right_expr;
 public:
+    UnaryOp (std::string op_, std::shared_ptr<BaseNode> right_expr_)
+        : op { op_ }, right_expr {right_expr_} {}
+
     virtual NodeType type() override { return NodeType::UnaryOp; }
     virtual std::string value() override { return std::string{"UnaryOp " + op}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -244,6 +251,9 @@ private:
     std::vector<std::shared_ptr<BaseNode>> expr_args;
 
 public:
+    FunctionCall (std::shared_ptr<BaseNode> callee_, std::vector<std::shared_ptr<BaseNode>> expr_args_)
+        : callee { callee_ }, expr_args {expr_args_} {}
+
     virtual NodeType type() override { return NodeType::FunctionCall; }
     virtual std::string value() override { return std::string{"FunctionCall callee args... "}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -259,6 +269,9 @@ private:
     std::shared_ptr<BaseNode> left_expr;
     std::shared_ptr<BaseNode> index_expr;
 public:
+    Access (std::shared_ptr<BaseNode> left_expr_, std::shared_ptr<BaseNode> index_expr_)
+        : left_expr { left_expr_ }, index_expr { index_expr_ } {}
+
     virtual NodeType type() override { return NodeType::Access; }
     virtual std::string value() override { return std::string{"Access accessee index"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -273,6 +286,9 @@ private:
     std::string identifier;
     bool sigil;
 public:
+    VariableLookup(std::string identifier_, bool sigil_)
+        : identifier { identifier_ }, sigil { sigil_ } {}
+
     virtual NodeType type() override { return NodeType::VariableLookup; }
     virtual std::string value() override { return std::string{"VariableLookup" + std::string{sigil ? " $" : " "} + identifier}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -286,6 +302,9 @@ class IntLiteral : public BaseNode
 private:
     int literal_value;
 public:
+    IntLiteral (int literal_value_)
+        : literal_value { literal_value_ } {}
+
     virtual NodeType type() override { return NodeType::IntLiteral; }
     virtual std::string value() override { return std::string{ "Int literal " + std::to_string(literal_value) }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -299,6 +318,9 @@ class BoolLiteral : public BaseNode
 private:
     bool literal_value;
 public:
+    BoolLiteral (bool literal_value_)
+        : literal_value { literal_value_ } {}
+
     virtual NodeType type() override { return NodeType::BoolLiteral; }
     virtual std::string value() override { return std::string{ "Bool literal " + std::to_string(literal_value) }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -312,6 +334,9 @@ class RealLiteral : public BaseNode
 private:
     double literal_value;
 public:
+    RealLiteral (double literal_value_)
+        : literal_value { literal_value_ } {}
+
     virtual NodeType type() override { return NodeType::RealLiteral; }
     virtual std::string value() override { return std::string{ "Real literal " + std::to_string(literal_value) }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -325,6 +350,9 @@ class StringLiteral : public BaseNode
 private:
     std::string literal_value;
 public:
+    StringLiteral (std::string literal_value_)
+        : literal_value { literal_value_ } {}
+
     virtual NodeType type() override { return NodeType::StringLiteral; }
     virtual std::string value() override { return std::string{ "String literal " + literal_value }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
@@ -333,10 +361,18 @@ public:
     }
 };
 
-/*
+/*  Deal with heterogeneous vectors later */
 class VectorLiteral : public BaseNode
 {
+private:
+    std::vector<BaseNode> contents;
+public:
+    VectorLiteral (std::vector<BaseNode> literal_value_)
+        : literal_value { literal_value_ } {}
 
+    virtual NodeType type() override { return NodeType::VectorLiteral; }
+    virtual std::string value() override { return std::string{ "VectorLiteral" }; }
+    virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
+        return self.contents;
+    }
 };
-*/
-
