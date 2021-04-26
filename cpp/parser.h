@@ -2,7 +2,7 @@
 #include "token.h"
 #include "ast.h"
 #include <vector>
-
+#include <utility>
 
 class ParseState 
 {
@@ -11,12 +11,12 @@ private:
     int index;
 public:
     ParseState (std::vector<Token> tokens_, int index_)
-        : tokens { tokens_ }, index { index_ } {}
+        : tokens { std::move(tokens_) }, index { index_ } {}
 
     Token currentToken();
     Token peekToken(int n=1);
     Token advance();
-    Token matchKeyword(std::string kwrd);
+    Token matchKeyword(std::string &kwrd);
     Token matchTokenType(TokenType ttype);
     Token matchSymbol(std::string smbl);
     Token matchLiteral();

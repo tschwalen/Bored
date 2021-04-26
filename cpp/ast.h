@@ -27,11 +27,6 @@ enum class NodeType {
     VectorLiteral
 };
 
-/*
- * TODO: rewrite constructors idiomatically
- * TODO: Implement vectors (will need a kvazztype struct/class)
-*/
-
 class BaseNode 
 {
 public:
