@@ -1,8 +1,10 @@
 #include "parser.h"
 #include "token.h"
+#include "ast.h"
 
 #include <string>
 #include <iostream>
+#include <memory> 
 
 Token ParseState::currentToken () {
     if (index >= tokens.size())
@@ -77,3 +79,41 @@ void ParseState::parsingError() {
     std::cout << "Parsing error encountered, terminating." << std::endl;
     exit(-1);
 }
+
+
+std::shared_ptr<BaseNode> parse_program(ParseState parse_state) {
+    auto ast_root = std::make_shared<Program>();
+
+    Token ct = parse_state.currentToken(); 
+    while (ct.type != eof) {
+        if ( ct.sval == "var" ) {
+            auto ast_node = parse_declare(parse_state);
+            ast_root->add_top_level_stmt(ast_node);
+        }
+        else if (ct.sval == "function") {
+            auto ast_node = parse_function_declare(parse_state);
+            ast_root->add_top_level_stmt(ast_node);
+        }
+        else {
+            std::cout << "Encountered unexpected token " << ct.sval 
+                << " while parsing top-level statement." << std::endl;
+            parse_state.parsingError();
+        }
+        ct = parse_state.currentToken();
+    }
+    return ast_root;
+}
+
+std::shared_ptr<BaseNode> parse_function_declare(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_arg_list(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_block(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_statement(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_if(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_while(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_assignment(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_declare(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_expr(ParseState parse_state, int rbp=0);
+std::shared_ptr<BaseNode> parse_unary(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_primary(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_function_call(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_expr_list(ParseState parse_state);

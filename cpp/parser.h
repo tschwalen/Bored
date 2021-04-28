@@ -23,20 +23,20 @@ public:
     void  parsingError();
 };
 
-BaseNode parse_program(ParseState parse_state);
-BaseNode parse_function_declare(ParseState parse_state);
-BaseNode parse_arg_list(ParseState parse_state);
-BaseNode parse_block(ParseState parse_state);
-BaseNode parse_statement(ParseState parse_state);
-BaseNode parse_if(ParseState parse_state);
-BaseNode parse_while(ParseState parse_state);
-BaseNode parse_assignment(ParseState parse_state);
-BaseNode parse_declare(ParseState parse_state);
-BaseNode parse_expr(ParseState parse_state, int rbp=0);
-BaseNode parse_unary(ParseState parse_state);
-BaseNode parse_primary(ParseState parse_state);
-BaseNode parse_function_call(ParseState parse_state);
-BaseNode parse_expr_list(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_program(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_function_declare(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_arg_list(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_block(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_statement(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_if(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_while(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_assignment(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_declare(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_expr(ParseState parse_state, int rbp=0);
+std::shared_ptr<BaseNode> parse_unary(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_primary(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_function_call(ParseState parse_state);
+std::shared_ptr<BaseNode> parse_expr_list(ParseState parse_state);
 
-void pretty_print_ast(BaseNode node, std::string _prefix="", bool _last=true);
-BaseNode parse_tokens(Token tokens, bool printout=false);
+void pretty_print_ast(std::shared_ptr<BaseNode> node, std::string _prefix="", bool _last=true);
+std::shared_ptr<BaseNode> parse_tokens(Token tokens, bool printout=false);
