@@ -55,6 +55,8 @@ private:
     std::vector<std::shared_ptr<BaseNode>> stmts;
 
 public:
+    Block(std::vector<std::shared_ptr<BaseNode>> stmts_)
+        : stmts { std::move(stmts_) } {}
     virtual NodeType type() override { return NodeType::Block; }
     virtual std::string value() override { return std::string{"Block"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { return stmts; }
