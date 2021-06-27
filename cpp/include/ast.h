@@ -358,8 +358,10 @@ public:
     }
 };
 
+
+
 /*  Deal with heterogeneous vectors later */
-class VectorLiteral : public BaseNode
+class VectorLiteral : public BaseNode // maybe "vector expression" would be a better way of putting it
 {
 private:
     std::vector<std::shared_ptr<BaseNode>> contents;
