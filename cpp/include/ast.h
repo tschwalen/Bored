@@ -81,7 +81,7 @@ public:
         : lvalue { lvalue_ }, op { op_ }, expr_node { expr_node_ } {}
 
     virtual NodeType type() override { return NodeType::AssignOp; }
-    virtual std::string value() override { return std::string{"AssignOp " + op + "LValue RValue"}; }
+    virtual std::string value() override { return std::string{"AssignOp " + op + " LValue RValue"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local { lvalue, expr_node };
         return local;
@@ -166,7 +166,7 @@ public:
         : condition {condition_}, body { body_ } {}
 
     virtual NodeType type() override { return NodeType::IfThen; }
-    virtual std::string value() override { return std::string{"If Then"}; }
+    virtual std::string value() override { return std::string{"If then"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local { condition, body };
         return local;
@@ -255,7 +255,7 @@ public:
     virtual std::string value() override { return std::string{"FunctionCall callee args... "}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local = expr_args;
-        expr_args.insert(expr_args.begin(), callee);
+        local.insert(local.begin(), callee);
         return local;
     }
 };
@@ -303,7 +303,7 @@ public:
         : literal_value { literal_value_ } {}
 
     virtual NodeType type() override { return NodeType::IntLiteral; }
-    virtual std::string value() override { return std::string{ "Int literal " + std::to_string(literal_value) }; }
+    virtual std::string value() override { return std::string{ "int-literal '" + std::to_string(literal_value) + "'" }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
@@ -319,7 +319,7 @@ public:
         : literal_value { literal_value_ } {}
 
     virtual NodeType type() override { return NodeType::BoolLiteral; }
-    virtual std::string value() override { return std::string{ "Bool literal " + std::to_string(literal_value) }; }
+    virtual std::string value() override { return std::string{ "bool-literal " + std::string{literal_value ? "'true'" : "'false'"}}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
@@ -335,7 +335,7 @@ public:
         : literal_value { literal_value_ } {}
 
     virtual NodeType type() override { return NodeType::RealLiteral; }
-    virtual std::string value() override { return std::string{ "Real literal " + std::to_string(literal_value) }; }
+    virtual std::string value() override { return std::string{ "real-literal '" + std::to_string(literal_value) + "'"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
@@ -351,7 +351,7 @@ public:
         : literal_value { literal_value_ } {}
 
     virtual NodeType type() override { return NodeType::StringLiteral; }
-    virtual std::string value() override { return std::string{ "String literal " + literal_value }; }
+    virtual std::string value() override { return std::string{ "string-literal '" + literal_value + "'"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;

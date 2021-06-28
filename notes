@@ -61,3 +61,11 @@ Classes, records, structs, etc.
 - Inheritance/Polymorphism/Prototype rules
     - I like how python does it
 
+
+
+
+Command to build (from the cpp directory)
+g++ -Iinclude src/*  -o build/main.out
+
+Command to just build the lexer
+g++ -g -DLEXER  -Iinclude src/lexer.cpp src/token.cpp  -o build/lexer.out

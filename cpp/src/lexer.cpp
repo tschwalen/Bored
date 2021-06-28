@@ -1,9 +1,9 @@
 #include "lexer.h"
 #include "token.h"
-#include <stdio.h>
-#include <ctype.h>
+#include <iostream>
 #include <fstream>
 #include <unordered_set> 
+
 
 std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
 std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":", "$"  } );
@@ -151,6 +151,7 @@ std::vector<Token> lex_string ( std::string &source ) {
     return tokens;
 }
 
+/*
 void pretty_print( std::vector<Token> &tokens ) {
     printf("[\n");
     for (int i = 0; i < tokens.size(); ++i) {
@@ -160,19 +161,22 @@ void pretty_print( std::vector<Token> &tokens ) {
     }
     printf("]\n");
 }
+*/
 
 void tuple_print( std::vector<Token> &tokens ) {
-    printf("[\n");
+    std::cout << "[" << std::endl;
     int i = 0;
-    while (i < tokens.size() - 1) {
-        printf("(\"%s\", \"%s\"),\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
+    for (auto &tok : tokens) {
+        if ( i != 0) {
+            std::cout << "," << std::endl;
+        }
+        std::cout << "(\"" << tok.sval << "\", \"" << tokenTypeString(tok.type) << "\")";
         ++i;
     }
-    printf("(\"%s\", \"%s\")\n", tokens[i].sval.c_str(), tokenTypeString( tokens[i].type).c_str());
-    printf("]\n");
+    std::cout << std::endl << "]" << std::endl;
 }
 
-
+#ifdef LEXER
 int main( int argc, const char* argv[] ) {
     if( argc > 1 ) {
         std::string source = argv[1];
@@ -191,4 +195,5 @@ int main( int argc, const char* argv[] ) {
         tuple_print(tokens);
     }
     return 0;
-}
+};
+#endif

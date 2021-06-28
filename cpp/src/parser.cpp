@@ -21,7 +21,7 @@ Token ParseState::currentToken () {
     return tokens[index];
 }
 
-Token ParseState::peekToken (int n=1) {
+Token ParseState::peekToken (int n) {
     int i { n + 1 };
     if ( i >= tokens.size())
         return Token { string(""), eof };
@@ -166,25 +166,28 @@ shared_ptr<BaseNode> parse_statement(ParseState &parse_state) {
         return parse_assignment(parse_state, lvalue);
     }
 
-    if ( current_token.sval == "var" ) 
-        return parse_declare(parse_state);
-    if ( current_token.sval == "if" )       
-        return parse_if(parse_state);
-    if ( current_token.sval == "while" )    
-        return parse_while(parse_state);
-
-    if ( current_token.sval == "return" ) {
+    shared_ptr<BaseNode> statement;
+    if ( current_token.sval == "var" ) { 
+        statement =  parse_declare(parse_state);
+    }
+    else if ( current_token.sval == "if" ) {
+        statement = parse_if(parse_state);
+    }          
+    else if ( current_token.sval == "while" ) {
+        statement =  parse_while(parse_state);
+    }           
+    else if ( current_token.sval == "return" ) {
         parse_state.matchKeyword( string{"return"} );
         auto expr = parse_expr(parse_state);
         parse_state.matchSymbol( string{";"});
-        return std::make_shared<Return>(expr);
+        statement = std::make_shared<Return>(expr);
     } 
+    else {
+        std::cout << "Invalid start of statement, encountered " << current_token.sval << std::endl;
+        parse_state.parsingError();
+    }
 
-    // if this point was reached, something went wrong
-    std::cout << "Invalid start of statement, encountered " << current_token.sval << std::endl;
-    parse_state.parsingError();
-    // garbage return here to satisfy the compiler
-    return std::make_shared<Return>();
+    return statement;
 }
 
 shared_ptr<BaseNode> parse_if(ParseState &parse_state){
@@ -210,10 +213,10 @@ shared_ptr<BaseNode> parse_while(ParseState &parse_state) {
     return std::make_shared<While>(condition, body);
 }
 
-shared_ptr<BaseNode> parse_assignment(ParseState &parse_state, shared_ptr<BaseNode> &lvalue) {
+shared_ptr<BaseNode> parse_assignment(ParseState &parse_state, shared_ptr<BaseNode> lvalue) {
 
-    if (lvalue.type != NodeType::VariableLookup || lvalue.type != NodeType::Access) {
-        std::cout << "Invalid L value:  " << current_token.sval << std::endl;
+    if (lvalue->type() != NodeType::VariableLookup && lvalue->type() != NodeType::Access) {
+        std::cout << "Invalid L value:  " << lvalue->value() << std::endl;
         parse_state.parsingError();
     }
 
@@ -238,10 +241,10 @@ shared_ptr<BaseNode> parse_declare(ParseState &parse_state) {
     parse_state.matchSymbol("=");
     auto expr = parse_expr(parse_state);
     parse_state.matchSymbol(";");
-    return std::make_shared<Declare>(id, expr);
+    return std::make_shared<Declare>(id.sval, expr);
 }
 
-shared_ptr<BaseNode> parse_expr(ParseState &parse_state, int rbp=0) {
+shared_ptr<BaseNode> parse_expr(ParseState &parse_state, int rbp) {
     auto left_expr = parse_primary(parse_state);
 
     // use Pratt parsing for operator precedence in expressions
@@ -283,8 +286,7 @@ shared_ptr<BaseNode> parse_primary(ParseState &parse_state) {
         }
         auto vector_contents = parse_expr_list(parse_state);
         parse_state.matchSymbol(closing);
-        return std::make_shared<VectorLiteral>(vector_contents)
-
+        return std::make_shared<VectorLiteral>(vector_contents);
     }
 
     // unary ops
@@ -303,25 +305,25 @@ shared_ptr<BaseNode> parse_primary(ParseState &parse_state) {
     }
     // identifier
     else if (current_token.type == identifier) {
-        auto id = parse_state.matchTokenType("identifier").sval;
+        auto id = parse_state.matchTokenType(identifier).sval;
         primary_expr = std::make_shared<VariableLookup>(id, false);
     }
     // sigiled identifier (global lookup)
     else if ( current_token.sval == "$" ) {
         parse_state.matchSymbol("$");
-        auto id = parse_state.matchTokenType("identifier").sval;
+        auto id = parse_state.matchTokenType(identifier).sval;
         primary_expr = std::make_shared<VariableLookup>(id, true);
     }
 
     if ( primary_expr != nullptr ) {
         // both an identifier or a parenthesized expression could be followed by access brackets or fn call
-        auto current_token = parse_state.currentToken()
+        auto current_token = parse_state.currentToken();
         while ( true ) {
-            if ( ct.sval == "(" ) {
+            if ( current_token.sval == "(" ) {
                 auto fn_call_args = parse_function_call(parse_state);
                 primary_expr =  std::make_shared<FunctionCall>(primary_expr, fn_call_args);
             }   
-            else if ( ct.sval == "[" ) {
+            else if ( current_token.sval == "[" ) {
                 parse_state.matchSymbol("[");
                 auto index_expr = parse_expr(parse_state);
                 parse_state.matchSymbol("]");
@@ -342,7 +344,7 @@ vector<shared_ptr<BaseNode>> parse_function_call(ParseState &parse_state) {
     parse_state.matchSymbol("(");
 
     vector<shared_ptr<BaseNode>> expr_args;
-    if ( parse_state.current_token().sval != ")" ) {
+    if ( parse_state.currentToken().sval != ")" ) {
         expr_args = parse_expr_list(parse_state);
     }
     parse_state.matchSymbol(")");
@@ -366,43 +368,52 @@ shared_ptr<BaseNode> parse_literal(ParseState &parse_state) {
     shared_ptr<BaseNode> result;
     switch(literal_token.type) {
         case bool_literal:
+            {
+                // might be overkill, but don't want to fail silently
+                bool bool_value = false;
+                if ( literal_token.sval == "true") {
+                    bool_value = true;
+                }
+                else if (literal_token.sval == "false") {
+                    bool_value = false;
+                }
+                else {
+                    std::cout << "Invalid contents of a boolean literal token : " << literal_token.sval << std::endl;
+                    parse_state.parsingError();
+                }
 
-            // might be overkill, but don't want to fail silently
-            bool bool_value = false;
-            if ( literal_token.sval == "true") {
-                bool_value = true;
+                result = std::make_shared<BoolLiteral>(bool_value);
+                break;
             }
-            else if (literal_token.sval == "false") {
-                bool_value = false;
-            }
-            else {
-                std::cout << "Invalid contents of a boolean literal token : " << literal_token.sval << std::endl;
-                parse_state.parsingError();
-            }
-
-            result = std::make_shared<BoolLiteral>(bool_value);
-            break;
         case int_literal:
-            int int_value = std::stoi(literal_token.sval)
-            result = std::make_shared<IntLiteral>(int_value);
-            break;
+            {
+                int int_value = std::stoi(literal_token.sval);
+                result = std::make_shared<IntLiteral>(int_value);
+                break;
+            }
         case real_literal:
-            double double_value = std::stod(literal_token.sval)
-            result = std::make_shared<RealLiteral>(double_value);
-            break;
+            {
+                double double_value = std::stod(literal_token.sval);
+                result = std::make_shared<RealLiteral>(double_value);
+                break;
+            }
         case string_literal:
-            result = std::make_shared<StringLiteral>(literal_token.sval);
-            break;
+            {
+                result = std::make_shared<StringLiteral>(literal_token.sval);
+                break;
+            }
         default:
-            std::cout << "Invalid token type for literal: " << tokenTypeString(literal_token.type) << std::endl;
-            parse_state.parsingError();
+            {
+                std::cout << "Invalid token type for literal: " << tokenTypeString(literal_token.type) << std::endl;
+                parse_state.parsingError();
+            }  
     }
     return result;
 }
 
 
 // entry-point for parsing
-shared_ptr<BaseNode> parse_tokens(vector<Token> tokens, bool printout=false) {
+shared_ptr<BaseNode> parse_tokens(vector<Token> tokens, bool printout) {
     ParseState parse_state { tokens };
     shared_ptr<BaseNode> ast = parse_program(parse_state);
     
@@ -414,7 +425,7 @@ shared_ptr<BaseNode> parse_tokens(vector<Token> tokens, bool printout=false) {
 
 
 // operator-precedence lookup 
-int binding_power(Token &tok) {
+int binding_power(Token tok) {
     auto tv = tok.sval;
     if ( tv == "|" || tv == "&" ) 
         return 1;
@@ -428,10 +439,10 @@ int binding_power(Token &tok) {
 }
 
 // adapted from https://vallentin.dev/2016/11/29/pretty-print-tree
-void pretty_print_ast(shared_ptr<BaseNode> node, string _prefix="", bool _last=true) {
-    std::cout << _prefix << ( _last ? " `- " : "|- ") << node.value() << std::endl;
+void pretty_print_ast(shared_ptr<BaseNode> node, string _prefix, bool _last) {
+    std::cout << _prefix << ( _last ? "`- " : "|- ") << node->value() << std::endl;
     _prefix = _prefix + ( _last ? "   " : "|  " );
-    vector<shared_ptr<BaseNode>> children = node.children();
+    vector<shared_ptr<BaseNode>> children = node->children();
     int child_count = children.size();
     int i = 0;
     for (auto ch : children) {
