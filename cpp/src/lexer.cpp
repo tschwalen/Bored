@@ -44,13 +44,13 @@ std::vector<Token> lex_string ( std::string &source ) {
 
                 // unordered_set.contains() only came out in c++20, so count > 0 is a less-readable way to check set membership
                 if ( keywords.count(word) > 0 ) {
-                    token = Token { word, keyword };
+                    token = Token { word, TokenType::keyword };
                 }
                 else if (word == "true" || word == "false") {
-                    token = Token { word, bool_literal };
+                    token = Token { word, TokenType::bool_literal };
                 }
                 else {
-                    token = Token { word, identifier };
+                    token = Token { word, TokenType::identifier };
                 }
                 tokens.push_back(token);
                 index = end;
@@ -74,11 +74,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                         ++end;
                     }
                     std::string real = source.substr(index, end - index);
-                    token = Token { real, real_literal };
+                    token = Token { real, TokenType::real_literal };
                 }
                 else {
                     std::string integer = source.substr(index, end - index);
-                    token = Token { integer, int_literal };
+                    token = Token { integer, TokenType::int_literal };
                 }
                 tokens.push_back(token);
                 index = end;
@@ -95,7 +95,7 @@ std::vector<Token> lex_string ( std::string &source ) {
                     ++end;
                 }
                 std::string string_value = source.substr(index + 1, end - (index + 1));
-                Token token = Token { string_value, string_literal };
+                Token token = Token { string_value, TokenType::string_literal };
                 tokens.push_back(token);
                 index = end + 1;
             }
@@ -109,11 +109,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                 Token token;
                 if ( end <= source.size() && ( multi.count(source.substr(index, end - index)) > 0) ) {
                     std::string symbol_value = source.substr(index, end - index);
-                    token = Token { symbol_value, symbol };
+                    token = Token { symbol_value, TokenType::symbol };
                     index = end;
                 }
                 else {
-                    token =  Token { std::string(1, source[index]), symbol };
+                    token =  Token { std::string(1, source[index]), TokenType::symbol };
                     ++index;
                 }
                 tokens.push_back(token);
@@ -142,7 +142,7 @@ std::vector<Token> lex_string ( std::string &source ) {
             }
             else {
                 // not even going to think about error recovery
-                printf("Invalid start of token %c\n", source[index]);
+                std::cout << "Invalid start of token " << source[index] << std::endl;
                 break;
             }
 
@@ -150,18 +150,6 @@ std::vector<Token> lex_string ( std::string &source ) {
     }
     return tokens;
 }
-
-/*
-void pretty_print( std::vector<Token> &tokens ) {
-    printf("[\n");
-    for (int i = 0; i < tokens.size(); ++i) {
-        const char* token = tokens[i].sval.c_str();
-        const char* token_type = tokenTypeString( tokens[i].type).c_str();
-        printf("%s : %s\n", token, token_type);
-    }
-    printf("]\n");
-}
-*/
 
 void tuple_print( std::vector<Token> &tokens ) {
     std::cout << "[" << std::endl;

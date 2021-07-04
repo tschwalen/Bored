@@ -2,7 +2,7 @@
 #include <string>
 
 
-enum TokenType {
+enum class TokenType {
     keyword, 
     identifier, 
     symbol, 
@@ -13,9 +13,13 @@ enum TokenType {
     eof
 };
 
+
+
 struct Token {
     std::string sval;
     TokenType type;
 };
+
+const Token EOF_TOKEN {"", TokenType::eof};
 
 std::string tokenTypeString(TokenType tt);

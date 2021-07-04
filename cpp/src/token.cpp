@@ -3,25 +3,25 @@
 std::string tokenTypeString(TokenType tt) {
     std::string str_repr;
     switch(tt) {
-        case keyword:
+        case TokenType::keyword:
             str_repr = "keyword";
             break;
-        case identifier:
+        case TokenType::identifier:
             str_repr = "identifier";
             break;
-        case symbol:
+        case TokenType::symbol:
             str_repr = "symbol";
             break;
-        case bool_literal:
+        case TokenType::bool_literal:
             str_repr = "bool-literal";
             break;
-        case int_literal:
+        case TokenType::int_literal:
             str_repr = "int-literal";
             break;
-        case real_literal:
+        case TokenType::real_literal:
             str_repr = "real-literal";
             break;
-        case string_literal:
+        case TokenType::string_literal:
             str_repr = "string-literal";
             break;
     }

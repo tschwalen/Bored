@@ -17,14 +17,14 @@ using std::shared_ptr;
 
 Token ParseState::currentToken () {
     if (index >= tokens.size())
-        return Token { string(""), eof };
+        return EOF_TOKEN;
     return tokens[index];
 }
 
 Token ParseState::peekToken (int n) {
     int i { n + 1 };
     if ( i >= tokens.size())
-        return Token { string(""), eof };
+        return EOF_TOKEN;
     return tokens[i];
 }
 
@@ -39,14 +39,13 @@ Token ParseState::matchKeyword(string kwrd) {
     std::string tv = ct.sval;
     TokenType   tt = ct.type;
     
-    // TODO: TokenType should be rewritten as a enum class
-    if ( tt == keyword && kwrd == tv )
+    if ( tt == TokenType::keyword && kwrd == tv )
         return advance();
 
     std::cout << "Expected keyword " << kwrd <<  " , encountered " 
         << tokenTypeString(tt) << " with value " << tv << std::endl;
     parsingError();
-    return Token { string(""), eof };
+    return EOF_TOKEN;
 }
 
 Token ParseState::matchTokenType(TokenType ttype) {
@@ -58,31 +57,31 @@ Token ParseState::matchTokenType(TokenType ttype) {
     std::cout << "Expected token of type " << tokenTypeString(ttype) <<  " , encountered " 
         << tokenTypeString(ct.type) << " with value " << ct.sval << std::endl;
     parsingError();
-    return Token { string(""), eof };
+    return EOF_TOKEN;
 }
 
 Token ParseState::matchSymbol(string smbl) {
     Token ct = currentToken();
 
-    if ( ct.type == symbol && ct.sval == smbl ) 
+    if ( ct.type == TokenType::symbol && ct.sval == smbl ) 
         return advance();
     
     std::cout << "Expected symbol " << smbl <<  " , encountered " 
         << tokenTypeString(ct.type) << " with value " << ct.sval << std::endl;
     parsingError();
-    return Token { string(""), eof };
+    return EOF_TOKEN;
 }
 
 Token ParseState::matchLiteral() {
     Token ct = currentToken();
     TokenType tt = ct.type;
-    if ( tt == bool_literal || tt == int_literal || tt == real_literal || tt == string_literal )
+    if ( tt == TokenType::bool_literal || tt == TokenType::int_literal || tt == TokenType::real_literal || tt == TokenType::string_literal )
         return advance();
 
     std::cout << "Expected literal value, encountered "  << tokenTypeString(ct.type) 
         << " with value " << ct.sval << std::endl;
     parsingError();
-    return Token { string(""), eof };
+    return EOF_TOKEN;
 }
 
 void ParseState::parsingError() {
@@ -99,7 +98,7 @@ shared_ptr<BaseNode> parse_program(ParseState &parse_state) {
     auto ast_root = std::make_shared<Program>();
 
     Token ct = parse_state.currentToken(); 
-    while (ct.type != eof) {
+    while (ct.type != TokenType::eof) {
         if ( ct.sval == "var" ) {
             auto ast_node = parse_declare(parse_state);
             ast_root->add_top_level_stmt(ast_node);
@@ -120,19 +119,19 @@ shared_ptr<BaseNode> parse_program(ParseState &parse_state) {
 
 shared_ptr<BaseNode> parse_function_declare(ParseState &parse_state) {
     parse_state.matchKeyword( string{"function"} );
-    Token identifier_token = parse_state.matchTokenType( identifier );
+    Token identifier_token = parse_state.matchTokenType( TokenType::identifier );
     parse_state.matchSymbol( string{"("} );
 
     vector<string> arg_names;
     if ( parse_state.currentToken().sval != ")" ) {
         do {
-            Token arg = parse_state.matchTokenType( identifier );
+            Token arg = parse_state.matchTokenType( TokenType::identifier );
             arg_names.push_back(arg.sval);
         } 
         while ( 
             // use short-circuiting here to advance the parser state only if the comma is encountered
             ( parse_state.currentToken().sval == "," ) && 
-            ( parse_state.advance().type != eof ) 
+            ( parse_state.advance().type != TokenType::eof ) 
         );
     }
 
@@ -156,7 +155,7 @@ shared_ptr<BaseNode> parse_block(ParseState &parse_state) {
 shared_ptr<BaseNode> parse_statement(ParseState &parse_state) {
     auto current_token = parse_state.currentToken();
 
-    if ( current_token.type == identifier || current_token.sval == "$" ) {
+    if ( current_token.type == TokenType::identifier || current_token.sval == "$" ) {
         auto lvalue = parse_primary(parse_state);
 
         if ( lvalue->type() == NodeType::FunctionCall ) {
@@ -237,7 +236,7 @@ shared_ptr<BaseNode> parse_assignment(ParseState &parse_state, shared_ptr<BaseNo
 shared_ptr<BaseNode> parse_declare(ParseState &parse_state) {
 
     parse_state.matchKeyword("var");
-    auto id = parse_state.matchTokenType(identifier);
+    auto id = parse_state.matchTokenType(TokenType::identifier);
     parse_state.matchSymbol("=");
     auto expr = parse_expr(parse_state);
     parse_state.matchSymbol(";");
@@ -304,14 +303,14 @@ shared_ptr<BaseNode> parse_primary(ParseState &parse_state) {
         primary_expr = parenthesized_expr;
     }
     // identifier
-    else if (current_token.type == identifier) {
-        auto id = parse_state.matchTokenType(identifier).sval;
+    else if (current_token.type == TokenType::identifier) {
+        auto id = parse_state.matchTokenType(TokenType::identifier).sval;
         primary_expr = std::make_shared<VariableLookup>(id, false);
     }
     // sigiled identifier (global lookup)
     else if ( current_token.sval == "$" ) {
         parse_state.matchSymbol("$");
-        auto id = parse_state.matchTokenType(identifier).sval;
+        auto id = parse_state.matchTokenType(TokenType::identifier).sval;
         primary_expr = std::make_shared<VariableLookup>(id, true);
     }
 
@@ -367,7 +366,7 @@ shared_ptr<BaseNode> parse_literal(ParseState &parse_state) {
     Token literal_token = parse_state.matchLiteral();
     shared_ptr<BaseNode> result;
     switch(literal_token.type) {
-        case bool_literal:
+        case TokenType::bool_literal:
             {
                 // might be overkill, but don't want to fail silently
                 bool bool_value = false;
@@ -385,19 +384,19 @@ shared_ptr<BaseNode> parse_literal(ParseState &parse_state) {
                 result = std::make_shared<BoolLiteral>(bool_value);
                 break;
             }
-        case int_literal:
+        case TokenType::int_literal:
             {
                 int int_value = std::stoi(literal_token.sval);
                 result = std::make_shared<IntLiteral>(int_value);
                 break;
             }
-        case real_literal:
+        case TokenType::real_literal:
             {
                 double double_value = std::stod(literal_token.sval);
                 result = std::make_shared<RealLiteral>(double_value);
                 break;
             }
-        case string_literal:
+        case TokenType::string_literal:
             {
                 result = std::make_shared<StringLiteral>(literal_token.sval);
                 break;
