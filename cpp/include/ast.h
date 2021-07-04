@@ -6,27 +6,38 @@
 #include <utility>
 
 enum class NodeType {
-    Program,
-    Block,
-    AssignOp,
-    Declare,
-    FunctionDeclare,
-    Return,
-    IfThen,
-    IfElse,
-    While,
-    BinaryOp,
-    UnaryOp,
-    FunctionCall,
-    Access,
-    VariableLookup,
-    IntLiteral,
-    BoolLiteral,
-    RealLiteral,
-    StringLiteral,
-    VectorLiteral
+    Program, Block, AssignOp, Declare, FunctionDeclare, Return, IfThen,
+    IfElse, While, BinaryOp, UnaryOp, FunctionCall, Access, VariableLookup,
+    IntLiteral, BoolLiteral, RealLiteral, StringLiteral, VectorLiteral
 };
 
+enum class AssignOpType {
+    assign, plus, minus, divide, multiply, modulo
+};
+
+// 'or' and 'and' become 'pipe' and 'amper' due to c++ reserving these keywords
+enum class BinaryOpType {
+    pipe, amper, equals, not_equals, less_equals, greater_equals, 
+    less_than, greater_than, plus, minus, multiply, divide, 
+    modulo
+};
+
+// 'not' becomes 'bang' here for similar reasons
+enum class UnaryOpType {
+    minus, bang
+};
+
+AssignOpType get_assign_op (std::string op);
+BinaryOpType get_binary_op (std::string op);
+UnaryOpType  get_unary_op  (std::string op); 
+
+std::string arg_list_to_string(std::vector<std::string> args);
+
+/*
+* Note: The value() and children() methods of AST node classes are really only used to print out
+* a readable representation of the AST, and as such are not written with much consideration to 
+* memory efficiency.
+*/
 class BaseNode 
 {
 public:
@@ -68,9 +79,9 @@ public:
 class AssignOp : public BaseNode 
 {
 private:
-    // these and all pointers in the code should probably be replaced with smart pointers
     std::shared_ptr<BaseNode> lvalue; 
     std::string op;
+    AssignOpType op_type;
     std::shared_ptr<BaseNode> expr_node;
 
     /* note that having to copy objects for the children() call isn't the worst thing in the world since the 
@@ -78,7 +89,7 @@ private:
     */
 public:
     AssignOp(std::shared_ptr<BaseNode> lvalue_, std::string op_, std::shared_ptr<BaseNode> expr_node_)
-        : lvalue { lvalue_ }, op { op_ }, expr_node { expr_node_ } {}
+        : lvalue { lvalue_ }, op { op_ }, op_type { get_assign_op(op_) }, expr_node { expr_node_ } {}
 
     virtual NodeType type() override { return NodeType::AssignOp; }
     virtual std::string value() override { return std::string{"AssignOp " + op + " LValue RValue"}; }
@@ -111,27 +122,14 @@ class FunctionDeclare : public BaseNode
 private:
     std::string identifier;
     std::vector<std::string> args;
-    std::shared_ptr<BaseNode> body; // always a block I think
-
-    std::string arg_list_to_string() {
-        std::string result = "[";
-        int index = 0;
-        for (auto &argstr : args) {
-            result += argstr;
-            if (index < args.size() - 1)
-                result += ", ";
-            ++index;
-        }
-        result += "]";
-        return result;
-    }
+    std::shared_ptr<BaseNode> body;
 
 public:
     FunctionDeclare (std::string identifier_, std::vector<std::string> args_, std::shared_ptr<BaseNode> body_) 
         : identifier { identifier_ }, args { std::move(args_) }, body { body_ } {} 
     
     virtual NodeType type() override { return NodeType::FunctionDeclare; }
-    virtual std::string value() override { return std::string{"FunctionDeclare " + identifier + " with " + arg_list_to_string()}; }
+    virtual std::string value() override { return std::string{"FunctionDeclare " + identifier + " with " + arg_list_to_string(args)}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local { body };
         return local;
@@ -184,7 +182,7 @@ public:
         : condition {condition_}, then_body { then_body_ }, else_body { else_body_ } {}
 
     virtual NodeType type() override { return NodeType::IfElse; }
-    virtual std::string value() override { return std::string{"If Else"}; }
+    virtual std::string value() override { return std::string{"If then else"}; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
         std::vector<std::shared_ptr<BaseNode>> local { condition, then_body, else_body };
         return local;
@@ -209,12 +207,13 @@ public:
 class BinaryOp : public BaseNode 
 {
 private:
-    std::string op; // TODO: replace with enum
+    std::string op;
+    BinaryOpType op_type;
     std::shared_ptr<BaseNode> left_expr;
     std::shared_ptr<BaseNode> right_expr;
 public:
     BinaryOp (std::string op_, std::shared_ptr<BaseNode> left_expr_, std::shared_ptr<BaseNode> right_expr_)
-        : op { op_ }, left_expr {left_expr_}, right_expr {right_expr_} {}
+        : op { op_ }, op_type { get_binary_op(op_) }, left_expr {left_expr_}, right_expr {right_expr_} {}
 
     virtual NodeType type() override { return NodeType::BinaryOp; }
     virtual std::string value() override { return std::string{"BinaryOp " + op}; }
@@ -227,11 +226,12 @@ public:
 class UnaryOp : public BaseNode
 {
 private:
-    std::string op; // TODO: replace with enum
+    std::string op;
+    UnaryOpType op_type;
     std::shared_ptr<BaseNode> right_expr;
 public:
     UnaryOp (std::string op_, std::shared_ptr<BaseNode> right_expr_)
-        : op { op_ }, right_expr {right_expr_} {}
+        : op { op_ }, op_type { get_unary_op(op_) }, right_expr {right_expr_} {}
 
     virtual NodeType type() override { return NodeType::UnaryOp; }
     virtual std::string value() override { return std::string{"UnaryOp " + op}; }
@@ -360,8 +360,8 @@ public:
 
 
 
-/*  Deal with heterogeneous vectors later */
-class VectorLiteral : public BaseNode // maybe "vector expression" would be a better way of putting it
+/*  Deal with homogeneous vectors later */
+class VectorLiteral : public BaseNode 
 {
 private:
     std::vector<std::shared_ptr<BaseNode>> contents;
@@ -371,7 +371,5 @@ public:
 
     virtual NodeType type() override { return NodeType::VectorLiteral; }
     virtual std::string value() override { return std::string{ "VectorLiteral" }; }
-    virtual const std::vector<std::shared_ptr<BaseNode>> children() override { 
-        return contents;
-    }
+    virtual const std::vector<std::shared_ptr<BaseNode>> children() override { return contents; }
 };

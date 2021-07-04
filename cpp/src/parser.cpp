@@ -10,7 +10,6 @@ using std::vector;
 using std::string;
 using std::shared_ptr;
 
-
 /*
 *   ParseState Methods
 */
@@ -36,7 +35,7 @@ Token ParseState::advance() {
 
 Token ParseState::matchKeyword(string kwrd) {
     Token ct = currentToken();
-    std::string tv = ct.sval;
+    string tv = ct.sval;
     TokenType   tt = ct.type;
     
     if ( tt == TokenType::keyword && kwrd == tv )
@@ -89,7 +88,6 @@ void ParseState::parsingError() {
     exit(-1);
 }
 
-
 /*
 *  Recursive-descent parsing methods
 */
@@ -118,9 +116,9 @@ shared_ptr<BaseNode> parse_program(ParseState &parse_state) {
 }
 
 shared_ptr<BaseNode> parse_function_declare(ParseState &parse_state) {
-    parse_state.matchKeyword( string{"function"} );
+    parse_state.matchKeyword( "function" );
     Token identifier_token = parse_state.matchTokenType( TokenType::identifier );
-    parse_state.matchSymbol( string{"("} );
+    parse_state.matchSymbol( "(" );
 
     vector<string> arg_names;
     if ( parse_state.currentToken().sval != ")" ) {
@@ -135,20 +133,19 @@ shared_ptr<BaseNode> parse_function_declare(ParseState &parse_state) {
         );
     }
 
-    parse_state.matchSymbol( string{")"} );
+    parse_state.matchSymbol( ")" );
     auto body = parse_block(parse_state);
     return std::make_shared<FunctionDeclare>(identifier_token.sval, arg_names, body);
 }
 
-
 shared_ptr<BaseNode> parse_block(ParseState &parse_state) {
-    parse_state.matchSymbol( string{"{"} );
+    parse_state.matchSymbol( "{" );
     vector<shared_ptr<BaseNode>> stmts { parse_statement(parse_state) };
 
     while ( parse_state.currentToken().sval != "}" )
         stmts.push_back( parse_statement(parse_state) );
 
-    parse_state.matchSymbol( string{"}"} );
+    parse_state.matchSymbol( "}" );
     return std::make_shared<Block>(stmts);
 }
 
@@ -159,7 +156,7 @@ shared_ptr<BaseNode> parse_statement(ParseState &parse_state) {
         auto lvalue = parse_primary(parse_state);
 
         if ( lvalue->type() == NodeType::FunctionCall ) {
-            parse_state.matchSymbol(string{";"});
+            parse_state.matchSymbol( ";" );
             return lvalue;
         }
         return parse_assignment(parse_state, lvalue);
@@ -176,9 +173,9 @@ shared_ptr<BaseNode> parse_statement(ParseState &parse_state) {
         statement =  parse_while(parse_state);
     }           
     else if ( current_token.sval == "return" ) {
-        parse_state.matchKeyword( string{"return"} );
+        parse_state.matchKeyword( "return" );
         auto expr = parse_expr(parse_state);
-        parse_state.matchSymbol( string{";"});
+        parse_state.matchSymbol( ";" );
         statement = std::make_shared<Return>(expr);
     } 
     else {
@@ -190,7 +187,7 @@ shared_ptr<BaseNode> parse_statement(ParseState &parse_state) {
 }
 
 shared_ptr<BaseNode> parse_if(ParseState &parse_state){
-    parse_state.matchKeyword( string{"if"} );
+    parse_state.matchKeyword( "if" );
     auto condition = parse_expr(parse_state);
     parse_state.matchKeyword("then");
     auto then_body = parse_block(parse_state);
@@ -205,9 +202,9 @@ shared_ptr<BaseNode> parse_if(ParseState &parse_state){
 }
 
 shared_ptr<BaseNode> parse_while(ParseState &parse_state) {
-    parse_state.matchKeyword( string{"while"} );
+    parse_state.matchKeyword( "while" );
     auto condition = parse_expr(parse_state);
-    parse_state.matchKeyword( string{"do"} );
+    parse_state.matchKeyword( "do" );
     auto body = parse_block(parse_state);
     return std::make_shared<While>(condition, body);
 }
@@ -280,7 +277,7 @@ shared_ptr<BaseNode> parse_primary(ParseState &parse_state) {
             closing = "]";
         }
         else {
-            //vector_type = "Heterogeneous";
+            //vector_type = "Homogenous";
             closing = "]>";   
         }
         auto vector_contents = parse_expr_list(parse_state);
@@ -356,11 +353,12 @@ vector<shared_ptr<BaseNode>> parse_expr_list(ParseState &parse_state) {
     do {
         auto expr = parse_expr(parse_state);
         expr_list.push_back(expr);
-    } while (parse_state.currentToken().sval == ",");
+
+        // again, use short circuiting to advance over comma token if it's encountered
+    } while (parse_state.currentToken().sval == "," && parse_state.advance().type != TokenType::eof );
 
     return expr_list;
 }
-
 
 shared_ptr<BaseNode> parse_literal(ParseState &parse_state) {
     Token literal_token = parse_state.matchLiteral();
@@ -410,7 +408,6 @@ shared_ptr<BaseNode> parse_literal(ParseState &parse_state) {
     return result;
 }
 
-
 // entry-point for parsing
 shared_ptr<BaseNode> parse_tokens(vector<Token> tokens, bool printout) {
     ParseState parse_state { tokens };
@@ -422,6 +419,9 @@ shared_ptr<BaseNode> parse_tokens(vector<Token> tokens, bool printout) {
     return ast;
 }
 
+/*
+*  Utility Functions
+*/
 
 // operator-precedence lookup 
 int binding_power(Token tok) {
@@ -450,4 +450,3 @@ void pretty_print_ast(shared_ptr<BaseNode> node, string _prefix, bool _last) {
         ++i;
     }
 }
-
