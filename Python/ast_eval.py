@@ -137,6 +137,8 @@ def eval_lvalue(node, env):
         env = symbol_table if node.sigil else env
         value, env = lookup(index, env)
         return env, index, value
+
+    # Implicit assumption that it's an "Access" node
     item = eval_node(node.left_expr, env)
     index = eval_node(node.index_expr, env)
     return item, index, item[index]

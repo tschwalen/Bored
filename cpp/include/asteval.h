@@ -15,13 +15,22 @@ enum class KvazzFlag {
 };
 
 enum class KvazzType {
-    Nothing, Int, Real, Bool, String, Hevec
+    Nothing, Builtin, Int, Real, Bool, String, Hevec
+};
+
+enum class EnvResultType {
+    Value, Function, Builtin
 };
 
 struct KvazzValue
 {
     KvazzType type;
     std::variant<int, double, bool, std::string, std::vector<KvazzValue>> value;
+};
+
+const KvazzValue NOTHING {
+    KvazzType::Nothing,
+    0
 };
 
 struct KvazzFunction
@@ -39,9 +48,10 @@ struct KvazzResult
 
 struct EnvEntry 
 {
-    bool is_function;
+    EnvResultType type;
     std::variant<KvazzValue, KvazzFunction> contents;
-}; 
+};
+
 
 struct Env 
 {
@@ -49,15 +59,54 @@ struct Env
     std::unordered_map<std::string, EnvEntry> table;
 };
 
+struct LookupResult
+{
+    EnvEntry result,
+    std::shared_ptr<Env> env
+};
+
 const KvazzResult GOOD_NO_RETURN {
-    KvazzValue {
-        KvazzType::Nothing,
-        0
-    },
+    NOTHING,
     KvazzFlag::Good
 };
 
 bool is_gnr(KvazzResult kr);
+
+LookupResult lookup(std::string identifier, std::shared_ptr<Env> env);
+
+
+/*
+*  AST-eval functions
+*/
+KvazzResult eval_program(std::shared_ptr<BaseNode>);
+KvazzResult eval_node(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult call_function(KvazzFunction fn, std::vector<KvazzValue>, std::shared_ptr<Env> env);
+KvazzResult eval_fn_call(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_bin_op(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_un_op(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_declare(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_assignop(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_fn_declare(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+
+// needs a different return value
+KvazzResult eval_lvalue(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+
+
+KvazzResult eval_block(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_return(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_while(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_if_else(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_if_then(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_var_lookup(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_access(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_vector_literal(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_bool_literal(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_int_literal(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_real_literal(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+KvazzResult eval_string_literal(std::shared_ptr<BaseNode>, std::shared_ptr<Env> env);
+
+
+
 
 
 
