@@ -104,7 +104,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { lvalue, expr_node };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -125,7 +125,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { expr_node };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -147,7 +147,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { body };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -168,7 +168,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { expr_node };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -188,7 +188,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { condition, body };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -209,7 +209,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { condition, then_body, else_body };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -227,7 +227,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { condition, body };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -249,7 +249,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { left_expr, right_expr };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -270,7 +270,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { right_expr };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -292,7 +292,7 @@ public:
         local.insert(local.begin(), callee);
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -312,7 +312,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local { left_expr, index_expr };
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -332,7 +332,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -351,7 +351,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this);
     }
 };
@@ -370,7 +370,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this);
     }
 };
@@ -389,7 +389,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this);
     }
 };
@@ -408,7 +408,7 @@ public:
         std::vector<std::shared_ptr<BaseNode>> local;
         return local;
     }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this);
     }
 };
@@ -425,7 +425,7 @@ public:
     virtual NodeType type() override { return NodeType::VectorLiteral; }
     virtual std::string value() override { return std::string{ "VectorLiteral" }; }
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { return contents; }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };

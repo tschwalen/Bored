@@ -63,7 +63,7 @@ struct Env
 
 struct LValue {
     KvazzType type; // Nothing : env
-    std::variant<std::string, Env, std::vector<KvazzValue> & lvalue;
+    std::variant<std::string, std::shared_ptr<Env>, std::vector<KvazzValue> lvalue;
     std::variant<int, std::string> index;
 };
 
