@@ -44,7 +44,7 @@ public:
     virtual NodeType              type() = 0;
     virtual std::string           value() = 0;
     virtual const std::vector<std::shared_ptr<BaseNode>>  children() = 0;
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) = 0;
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) = 0;
 };
 
 class Program : public BaseNode 
@@ -58,7 +58,7 @@ public:
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { return nodes; }
 
     void add_top_level_stmt( std::shared_ptr<BaseNode> node ) { nodes.push_back(node); }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };
@@ -77,7 +77,7 @@ public:
     virtual const std::vector<std::shared_ptr<BaseNode>> children() override { return stmts; }
 
     void add_top_level_stmt( std::shared_ptr<BaseNode> node ) { stmts.push_back(node); }
-    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> &env) override {
+    virtual KvazzResult eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) override {
         return ast_eval.eval(*this, env);
     }
 };

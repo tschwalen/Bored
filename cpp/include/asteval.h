@@ -30,11 +30,6 @@ struct KvazzValue
     std::variant<int, double, bool, std::string, std::vector<KvazzValue>, LValue> value;
 };
 
-const KvazzValue NOTHING {
-    KvazzType::Nothing,
-    0
-};
-
 struct KvazzFunction
 {
     std::string               name;
@@ -63,20 +58,20 @@ struct Env
 
 struct LValue {
     KvazzType type; // Nothing : env
-    std::variant<std::string, std::shared_ptr<Env>, std::vector<KvazzValue> lvalue;
+    std::variant<std::string, std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
     std::variant<int, std::string> index;
 };
 
 struct LookupResult
 {
-    EnvEntry result,
-    std::shared_ptr<Env> env
+    EnvEntry result;
+    std::shared_ptr<Env> env;
 };
 
-const KvazzResult GOOD_NO_RETURN {
-    NOTHING,
-    KvazzFlag::Good
-};
+KvazzValue VALUE_NOTHING();
+
+KvazzResult RESULT_GOOD_NO_RETURN();
+
 
 class AstEvaluator {
 private:
@@ -96,7 +91,7 @@ public:
     KvazzResult eval(UnaryOp &node, std::shared_ptr<Env> env);
     KvazzResult eval(FunctionCall &node, std::shared_ptr<Env> env);
     KvazzResult eval(Access &node, std::shared_ptr<Env> env);
-    KvazzResult eval(VariableLookup &node, std::shared_ptr<Env> env,);
+    KvazzResult eval(VariableLookup &node, std::shared_ptr<Env> env);
     KvazzResult eval(IntLiteral &node);
     KvazzResult eval(BoolLiteral &node);
     KvazzResult eval(RealLiteral &node);
@@ -110,7 +105,7 @@ bool is_gnr(KvazzResult kr);
 
 LookupResult lookup(std::string identifier, std::shared_ptr<Env> env);
 
-KvazzResult call_function(KvazzFunction &fn, std::vector<KvazzValue> args, std::shared_ptr<Env> env);
+KvazzResult call_function(KvazzFunction &fn, std::vector<KvazzValue> &arg_values, std::shared_ptr<Env> env) {
 
 /*
 *  AST-eval functions

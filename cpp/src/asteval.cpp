@@ -45,6 +45,19 @@ bool is_gnr(KvazzResult kr) {
     return kr.flag == KvazzFlag::Good && kr.return_value.type == KvazzType::Nothing;
 }
 
+KvazzValue VALUE_NOTHING() {
+    return KvazzValue {
+        KvazzType::Nothing,
+        0
+    };
+}
+KvazzResult RESULT_GOOD_NO_RETURN () {
+    return KvazzResult { 
+        VALUE_NOTHING(),
+        KvazzFlag::Good
+    };
+}
+
 enum built_in_function_ids {
     _print,
     _lengthof,
@@ -96,14 +109,14 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
     return LookupResult {
         EnvEntry {
             EnvResultType::Value,
-            NOTHING
+            VALUE_NOTHING()
         },
         curr_env
     };
 }
 KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, shared_ptr<Env> env) {
     // TEMP
-    return GOOD_NO_RETURN;
+    return RESULT_GOOD_NO_RETURN();
 }
 
 /*
@@ -111,8 +124,8 @@ KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, sha
 */
 
 KvazzResult AstEvaluator::eval(Program &node, shared_ptr<Env> env) {
-    for (auto nd : node.nodes) {
-        nd.eval(*this, env);
+    for (auto nd : node.children()) {
+        nd->eval(*this, env);
     }
 
     auto main_found = env->table.find("main");
@@ -127,12 +140,12 @@ KvazzResult AstEvaluator::eval(Program &node, shared_ptr<Env> env) {
 KvazzResult AstEvaluator::eval(Block &node, std::shared_ptr<Env> env) {
     auto local_env = std::make_shared<Env> {env, unordered_map<string, EnvEntry>()};
 
-    for (auto nd : node.stmts) {
-        auto result = nd.eval(*this, local_env);
+    for (auto nd : node.children()) {
+        auto result = nd->eval(*this, local_env);
         if (result.flag == KvazzFlag::Return)
             return result;
     }
-    return GOOD_NO_RETURN;
+    return RESULT_GOOD_NO_RETURN();
 }
 
 
