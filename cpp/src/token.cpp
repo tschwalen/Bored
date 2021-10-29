@@ -24,6 +24,9 @@ std::string tokenTypeString(TokenType tt) {
         case TokenType::string_literal:
             str_repr = "string-literal";
             break;
+        case TokenType::eof:
+            str_repr = "eof";
+            break;
     }
     return str_repr;
 }

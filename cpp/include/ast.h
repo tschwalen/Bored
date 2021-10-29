@@ -5,6 +5,10 @@
 #include <memory> 
 #include <utility>
 
+struct Env;
+struct KvazzResult;
+class AstEvaluator;
+
 enum class NodeType {
     Program, Block, AssignOp, Declare, FunctionDeclare, Return, IfThen,
     IfElse, While, BinaryOp, UnaryOp, FunctionCall, Access, VariableLookup,

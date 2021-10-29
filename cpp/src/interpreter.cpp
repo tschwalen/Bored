@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "asteval.h"
+#include "interpreter.h"
 #include <string>
 #include <variant>
 #include <vector>
@@ -123,7 +124,7 @@ KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, sha
 *  AST-eval functions
 */
 
-KvazzResult AstEvaluator::eval(Program &node, shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
     for (auto nd : node.children()) {
         nd->eval(*this, env);
     }
@@ -134,11 +135,11 @@ KvazzResult AstEvaluator::eval(Program &node, shared_ptr<Env> env) {
         vector<KvazzValue> args;
         call_function(main_method, args, env);
     }
-
+    return RESULT_GOOD_NO_RETURN();
 }
 
-KvazzResult AstEvaluator::eval(Block &node, std::shared_ptr<Env> env) {
-    auto local_env = std::make_shared<Env> {env, unordered_map<string, EnvEntry>()};
+KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
+    auto local_env = std::make_shared<Env>(env, unordered_map<string, EnvEntry>());
 
     for (auto nd : node.children()) {
         auto result = nd->eval(*this, local_env);
@@ -149,23 +150,23 @@ KvazzResult AstEvaluator::eval(Block &node, std::shared_ptr<Env> env) {
 }
 
 
-KvazzResult AstEvaluator::eval(AssignOp &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(Declare &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(FunctionDeclare &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(Return &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(IfThen &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(IfElse &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(While &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(BinaryOp &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(UnaryOp &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(FunctionCall &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(Access &node, std::shared_ptr<Env> env);
-KvazzResult AstEvaluator::eval(VariableLookup &node, std::shared_ptr<Env> env,);
-KvazzResult AstEvaluator::eval(IntLiteral &node);
-KvazzResult AstEvaluator::eval(BoolLiteral &node);
-KvazzResult AstEvaluator::eval(RealLiteral &node);
-KvazzResult AstEvaluator::eval(StringLiteral &node);
-KvazzResult AstEvaluator::eval(VectorLiteral &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(AssignOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(Return &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(IfThen &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(FunctionCall &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(Access &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(VariableLookup &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(IntLiteral &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(BoolLiteral &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(RealLiteral &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(StringLiteral &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(VectorLiteral &node, std::shared_ptr<Env> env);
 
 
 //KvazzResult eval_assignop(shared_ptr<BaseNode> node, shared_ptr<Env> env) {

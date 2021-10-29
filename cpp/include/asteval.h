@@ -68,48 +68,32 @@ struct LookupResult
     std::shared_ptr<Env> env;
 };
 
-KvazzValue VALUE_NOTHING();
-
-KvazzResult RESULT_GOOD_NO_RETURN();
-
 
 class AstEvaluator {
 private:
     bool lvalue_flag;
 
 public:
-    KvazzResult eval(Program &node, std::shared_ptr<Env> env);
-    KvazzResult eval(Block &node, std::shared_ptr<Env> env);
-    KvazzResult eval(AssignOp &node, std::shared_ptr<Env> env);
-    KvazzResult eval(Declare &node, std::shared_ptr<Env> env);
-    KvazzResult eval(FunctionDeclare &node, std::shared_ptr<Env> env);
-    KvazzResult eval(Return &node, std::shared_ptr<Env> env);
-    KvazzResult eval(IfThen &node, std::shared_ptr<Env> env);
-    KvazzResult eval(IfElse &node, std::shared_ptr<Env> env);
-    KvazzResult eval(While &node, std::shared_ptr<Env> env);
-    KvazzResult eval(BinaryOp &node, std::shared_ptr<Env> env);
-    KvazzResult eval(UnaryOp &node, std::shared_ptr<Env> env);
-    KvazzResult eval(FunctionCall &node, std::shared_ptr<Env> env);
-    KvazzResult eval(Access &node, std::shared_ptr<Env> env);
-    KvazzResult eval(VariableLookup &node, std::shared_ptr<Env> env);
-    KvazzResult eval(IntLiteral &node);
-    KvazzResult eval(BoolLiteral &node);
-    KvazzResult eval(RealLiteral &node);
-    KvazzResult eval(StringLiteral &node);
-    KvazzResult eval(VectorLiteral &node, std::shared_ptr<Env> env);
+    virtual KvazzResult eval(Program &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(Block &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(AssignOp &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(Declare &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(FunctionDeclare &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(Return &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(IfThen &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(IfElse &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(While &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(BinaryOp &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(UnaryOp &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(FunctionCall &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(Access &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(VariableLookup &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(IntLiteral &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(BoolLiteral &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(RealLiteral &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(StringLiteral &node, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(VectorLiteral &node, std::shared_ptr<Env> env) = 0;
 };
-
-
-
-bool is_gnr(KvazzResult kr);
-
-LookupResult lookup(std::string identifier, std::shared_ptr<Env> env);
-
-KvazzResult call_function(KvazzFunction &fn, std::vector<KvazzValue> &arg_values, std::shared_ptr<Env> env) {
-
-/*
-*  AST-eval functions
-*/
 
 
 

@@ -4,6 +4,8 @@
 #include <vector>
 #include <utility>
 
+class BaseNode;
+
 class ParseState 
 {
 private:
