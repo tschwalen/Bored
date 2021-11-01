@@ -10,10 +10,6 @@ LookupResult lookup(std::string identifier, std::shared_ptr<Env> env);
 
 KvazzResult call_function(KvazzFunction &fn, std::vector<KvazzValue> &arg_values, std::shared_ptr<Env> env);
 
-KvazzValue VALUE_NOTHING();
-
-KvazzResult RESULT_GOOD_NO_RETURN();
-
 class Interpreter : public AstEvaluator {
 private:
     bool lvalue_flag;

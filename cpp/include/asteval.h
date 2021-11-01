@@ -39,7 +39,7 @@ struct KvazzFunction
 
 struct KvazzResult
 {
-    KvazzValue return_value;
+    KvazzValue kvazz_value;
     KvazzFlag  flag;
 };
 

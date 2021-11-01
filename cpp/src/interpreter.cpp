@@ -42,22 +42,61 @@ Visitor interface can be repurposed to write a single-pass AST compiler too
 /* 
 *   Utility Functions
 */
-bool is_gnr(KvazzResult kr) {
-    return kr.flag == KvazzFlag::Good && kr.return_value.type == KvazzType::Nothing;
+bool is_gnr(KvazzResult &kr) {
+    return kr.flag == KvazzFlag::Good && kr.kvazz_value.type == KvazzType::Nothing;
 }
 
-KvazzValue VALUE_NOTHING() {
-    return KvazzValue {
-        KvazzType::Nothing,
-        0
-    };
+bool test(KvazzResult kr) {
+    /*
+     *  Truthy-falsey test for every valid type a kvazz expression could evaluate to.
+    */
+    auto type = kr.kvazz_value.type;
+    auto var_value = kr.kvazz_value.value;
+
+    switch(type) {
+        case KvazzType::Bool:
+            {
+                return std::get<bool>(var_value);
+            }
+        case KvazzType::Int:
+            {
+                auto int_value = std::get<int>(var_value);
+                return int_value == 0 ? false : true;
+            }
+        case KvazzType::String:
+            {
+                auto str_value = std::get<string>(var_value);
+                return str_value.length() < 0 ? false : true;
+            }
+        case KvazzType::Hevec:
+            {
+                auto vec_value = std::get<vector<KvazzValue>>(var_value);
+                return vec_value.length() < 0 ? false : true;
+            }
+        case KvazzType::Real:
+            {
+                auto real_value = std::get<double>(var_value);
+                // floating point truthyness seems like a bad idea, but
+                // I'll put it here for the sake of completeness
+                return real_value == 0.0 ? false : true;
+            }
+        case KvazzType::Nothing:
+        case KvazzType::Builtin:
+        case KvazzType::LValue:
+        default:
+            {
+                // give more info in the future
+                std::cerr << "Attempted bool test on invalid expression value." << std::endl;
+            }
+    }
+    return false;
 }
-KvazzResult RESULT_GOOD_NO_RETURN () {
-    return KvazzResult { 
-        VALUE_NOTHING(),
-        KvazzFlag::Good
-    };
-}
+
+KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
+
+KvazzResult GOOD_NO_RETURN = KvazzResult { NOTHING, KvazzFlag::Good };
+
+
 
 enum built_in_function_ids {
     _print,
@@ -110,14 +149,14 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
     return LookupResult {
         EnvEntry {
             EnvResultType::Value,
-            VALUE_NOTHING()
+            NOTHING
         },
         curr_env
     };
 }
 KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, shared_ptr<Env> env) {
     // TEMP
-    return RESULT_GOOD_NO_RETURN();
+    return GOOD_NO_RETURN;
 }
 
 /*
@@ -135,7 +174,7 @@ KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
         vector<KvazzValue> args;
         call_function(main_method, args, env);
     }
-    return RESULT_GOOD_NO_RETURN();
+    return GOOD_NO_RETURN;
 }
 
 KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
@@ -146,17 +185,46 @@ KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
         if (result.flag == KvazzFlag::Return)
             return result;
     }
-    return RESULT_GOOD_NO_RETURN();
+    return GOOD_NO_RETURN;
 }
 
 
 KvazzResult Interpreter::eval(AssignOp &node, std::shared_ptr<Env> env);
+
 KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(Return &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(IfThen &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env);
+
+KvazzResult Interpreter::eval(Return &node, std::shared_ptr<Env> env) {
+    auto expression_result = node.expr_node->eval(*this, env);
+    expression_result.flag = KvazzFlag::Return;
+    return expression_result;
+}
+
+KvazzResult Interpreter::eval(IfThen &node, std::shared_ptr<Env> env) {
+    if (test(node.condition->eval(*this, env))) {
+        return node.body->eval(*this, env);
+    }
+    return GOOD_NO_RETURN;
+}
+
+KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env) {
+    if (test(node.condition->eval(*this, env))) {
+        return node.then_body->eval(*this, env);
+    }
+    else {
+        return node.else_body->eval(*this, env);
+    }
+}
+
+KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env) {
+    while (test(node.condition->eval(*this, env))) {
+        auto maybe_result = node.body->eval(*this, env);
+        if(maybe_result.flag == KvazzFlag::Return)
+            return maybe_result;
+    }
+    return GOOD_NO_RETURN;
+}
+
 KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(FunctionCall &node, std::shared_ptr<Env> env);

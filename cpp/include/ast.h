@@ -159,10 +159,9 @@ public:
 
 class Return : public BaseNode 
 {
-private:
+public:
     std::shared_ptr<BaseNode> expr_node;
 
-public:
     Return (std::shared_ptr<BaseNode> expr_node_) 
         : expr_node { expr_node_ } {}
 
@@ -179,10 +178,10 @@ public:
 
 class IfThen : public BaseNode
 {
-private:
+public:
     std::shared_ptr<BaseNode> condition;
     std::shared_ptr<BaseNode> body;
-public:
+
     IfThen (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> body_)
         : condition {condition_}, body { body_ } {}
 
@@ -199,11 +198,11 @@ public:
 
 class IfElse : public BaseNode
 {
-private:
+public:
     std::shared_ptr<BaseNode> condition;
     std::shared_ptr<BaseNode> then_body;
     std::shared_ptr<BaseNode> else_body;
-public:
+
     IfElse (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> then_body_, std::shared_ptr<BaseNode> else_body_)
         : condition {condition_}, then_body { then_body_ }, else_body { else_body_ } {}
 
@@ -219,10 +218,10 @@ public:
 };
 
 class While : public BaseNode {
-private:
+public:
     std::shared_ptr<BaseNode> condition;
     std::shared_ptr<BaseNode> body;
-public:
+
     While (std::shared_ptr<BaseNode> condition_, std::shared_ptr<BaseNode> body_)
             : condition {condition_}, body { body_ } {}
     virtual NodeType type() override { return NodeType::While; }
