@@ -33,7 +33,12 @@ enum class UnaryOpType {
 
 AssignOpType get_assign_op (std::string op);
 BinaryOpType get_binary_op (std::string op);
-UnaryOpType  get_unary_op  (std::string op); 
+UnaryOpType  get_unary_op  (std::string op);
+
+bool is_arithmetic_binop(BinaryOpType);
+bool is_comparison_binop(BinaryOpType);
+bool is_equality_binop(BinaryOpType);
+bool is_logical_binop(BinaryOpType);
 
 std::string arg_list_to_string(std::vector<std::string> args);
 
@@ -237,12 +242,12 @@ public:
 
 class BinaryOp : public BaseNode 
 {
-private:
+public:
     std::string op;
     BinaryOpType op_type;
     std::shared_ptr<BaseNode> left_expr;
     std::shared_ptr<BaseNode> right_expr;
-public:
+
     BinaryOp (std::string op_, std::shared_ptr<BaseNode> left_expr_, std::shared_ptr<BaseNode> right_expr_)
         : op { op_ }, op_type { get_binary_op(op_) }, left_expr {left_expr_}, right_expr {right_expr_} {}
 

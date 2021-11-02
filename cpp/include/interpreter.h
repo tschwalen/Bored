@@ -4,7 +4,7 @@
 
 
 
-bool is_gnr(KvazzResult kr);
+bool is_gnr(KvazzResult &kr);
 
 LookupResult lookup(std::string identifier, std::shared_ptr<Env> env);
 

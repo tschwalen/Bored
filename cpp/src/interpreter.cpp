@@ -39,6 +39,11 @@ Visitor interface can be repurposed to write a single-pass AST compiler too
 
 */
 
+KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
+
+KvazzResult GOOD_NO_RETURN = KvazzResult { NOTHING, KvazzFlag::Good };
+
+
 /* 
 *   Utility Functions
 */
@@ -92,11 +97,6 @@ bool test(KvazzResult kr) {
     return false;
 }
 
-KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
-
-KvazzResult GOOD_NO_RETURN = KvazzResult { NOTHING, KvazzFlag::Good };
-
-
 
 enum built_in_function_ids {
     _print,
@@ -116,6 +116,7 @@ unordered_map<string, int> built_in_function_table = {
 };
 
 
+// maybe this should be part of the interpreter class
 Env global_env {
     nullptr, 
     unordered_map<string, EnvEntry>()
@@ -154,10 +155,13 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
         curr_env
     };
 }
+
 KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, shared_ptr<Env> env) {
     // TEMP
     return GOOD_NO_RETURN;
 }
+
+
 
 /*
 *  AST-eval functions
@@ -225,7 +229,70 @@ KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env) {
     return GOOD_NO_RETURN;
 }
 
-KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
+    auto left = node.left_expr->eval(*this, env);
+    auto right = node.right_expr->eval(*this, env);
+
+    if (left.flag == KvazzFlag::Error || right.flag == KvazzFlag::Error) {
+        // might should do a system exit here... not sure, better error handling will come
+        return KvazzResult { NOTHING, KvazzFlag::Error };
+    }
+
+    KvazzResult result;
+    switch(node.op_type) {
+        case BinaryOpType::pipe:
+        {
+            // logical OR
+            result = KvazzResult {
+                KvazzValue {
+                    KvazzType::Bool,
+                    (test(left) || test(right))
+                },
+                KvazzFlag::Good
+            };
+        }
+        case BinaryOpType::amper:
+        {
+            // logical AND
+            result = KvazzResult {
+                KvazzValue {
+                    KvazzType::Bool,
+                    (test(left) && test(right))
+                },
+                KvazzFlag::Good
+            };
+        }
+        case BinaryOpType::equals:
+        {
+            // if not same type, false
+            // if same type, compare values
+            // trivial for bool, int, real, and string
+            // for vector will need to iterate over every element and compare kvazzvalue with same rules
+        }
+        case BinaryOpType::not_equals:
+        {}
+        case BinaryOpType::less_equals:
+        {}
+        case BinaryOpType::greater_equals:
+        {}
+        case BinaryOpType::less_than:
+        {}
+        case BinaryOpType::greater_than:
+        {}
+        case BinaryOpType::plus:
+        {}
+        case BinaryOpType::minus:
+        {}
+        case BinaryOpType::multiply:
+        {}
+        case BinaryOpType::divide:
+        {}
+        case BinaryOpType::modulo:
+        {}
+    }
+    return result;
+}
+
 KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(FunctionCall &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(Access &node, std::shared_ptr<Env> env);

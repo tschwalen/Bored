@@ -56,3 +56,30 @@ UnaryOpType get_unary_op (string op) {
     std::cerr << "Invalid unary op: " << op << std::endl;
     return UnaryOpType::minus;
 }
+
+
+// unused, thought I may need them for binop eval for interpreter, not sure now
+bool is_arithmetic_binop(BinaryOpType op) {
+    return op == BinaryOpType::plus ||
+            op == BinaryOpType::minus ||
+            op ==  BinaryOpType::multiply ||
+            op ==  BinaryOpType::divide ||
+            op ==  BinaryOpType::modulo;
+}
+
+bool is_comparison_binop(BinaryOpType op) {
+    return op == BinaryOpType::less_equals ||
+            op == BinaryOpType::greater_equals ||
+            op ==  BinaryOpType::less_than ||
+            op ==  BinaryOpType::greater_than;
+}
+
+bool is_equality_binop(BinaryOpType op) {
+    return op == BinaryOpType::equals ||
+            op == BinaryOpType::not_equals;
+}
+
+bool is_logical_binop(BinaryOpType op) {
+    return op == BinaryOpType::pipe ||
+            op == BinaryOpType::amper;
+}
