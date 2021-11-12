@@ -14,7 +14,6 @@ using std::vector;
 using std::string;
 
 /*
-
 Note: 
 
 I've reached a point in the design of the interpreter where I've realized that
@@ -35,20 +34,87 @@ Interpreter is now a class with a Visit/Dispatch method for every node type
 - Built-ins, metadata, etc can be static fields
 
 Visitor interface can be repurposed to write a single-pass AST compiler too
-
-
 */
 
 KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
 
-KvazzResult GOOD_NO_RETURN = KvazzResult { NOTHING, KvazzFlag::Good };
+KvazzResult GOOD_NO_VALUE = KvazzResult { NOTHING, KvazzFlag::Good };
 
+KvazzResult GOOD_BOOL_TRUE = KvazzResult {
+    KvazzValue {
+        KvazzType::Bool,
+        true
+    },
+    KvazzFlag::Good
+};
 
+KvazzResult GOOD_BOOL_FALSE = KvazzResult {
+    KvazzValue {
+        KvazzType::Bool,
+        false
+    },
+    KvazzFlag::Good
+};
+
+// Int, Real, Bool, String, Hevec
+KvazzResult make_good_result(bool value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::Bool,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(int value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::Int,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(double value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::Real,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(string value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::String,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(vector<KvazzValue> value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::Hevec,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
 /* 
 *   Utility Functions
 */
 bool is_gnr(KvazzResult &kr) {
     return kr.flag == KvazzFlag::Good && kr.kvazz_value.type == KvazzType::Nothing;
+}
+
+bool is_numeric_type(KvazzType t) {
+    return t == KvazzType::Int || t == KvazzType::Real;
 }
 
 bool test(KvazzResult kr) {
@@ -91,12 +157,61 @@ bool test(KvazzResult kr) {
         default:
             {
                 // give more info in the future
-                std::cerr << "Attempted bool test on invalid expression value." << std::endl;
+                std::cerr << "Attempted bool test on invalid expression value.\n";
             }
     }
     return false;
 }
 
+bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+
+    if (is_numeric_type(left_type) && is_numeric_type(right_type) ) {
+        // does c++ even allow this? lol
+        auto left_value = kv1.type == KvazzType::Int ?
+                std::get<int>(kv1.value) : std::get<double>(kv1.value);
+        auto right_value = kv2.type == KvazzType::Int ?
+                std::get<int>(kv2.value) : std::get<double>(kv2.value);
+        return left_value == right_value;
+
+    }
+
+    if (left_type != right_type) {
+        return false;
+    }
+
+    // from here on out left_type == right_type
+    if (left_type == KvazzType::String) {
+        auto left_value = std::get<string>(kv1.value);
+        auto right_value = std::get<string>(kv2.value);
+        return left_value == right_value;
+    }
+
+    if (left_type == KvazzType::Hevec) {
+
+        auto vec1 = std::get<vector<KvazzValue>>(kv1.value);
+        auto vec2 = std::get<vector<KvazzValue>>(kv2.value);
+        if(vec1.size() != vec2.size()) {
+            return false;
+        }
+
+        // for x, y in zip(left, right), if x != y return false, finally return true
+        for (int i = 0; i < vec1.size(); ++i) {
+            if (!kvazzvalue_equals(vec1[i], vec2[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // last compare case for now. Not sure if I want to be able to compare functions or
+    // built ins... comparing AST might be interesting. Another compare operator x =@= y
+    // that checks whether or not x and y are the same object might be useful but hard to
+    // implement.
+
+    return false;
+}
 
 enum built_in_function_ids {
     _print,
@@ -114,7 +229,6 @@ unordered_map<string, int> built_in_function_table = {
     {"lengthof", _lengthof},
     {"hevec", _hevec},
 };
-
 
 // maybe this should be part of the interpreter class
 Env global_env {
@@ -158,15 +272,13 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
 
 KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, shared_ptr<Env> env) {
     // TEMP
-    return GOOD_NO_RETURN;
+    return GOOD_NO_VALUE;
 }
 
 
-
 /*
-*  AST-eval functions
+*  AST-eval Interpreter class methods
 */
-
 KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
     for (auto nd : node.children()) {
         nd->eval(*this, env);
@@ -178,7 +290,7 @@ KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
         vector<KvazzValue> args;
         call_function(main_method, args, env);
     }
-    return GOOD_NO_RETURN;
+    return GOOD_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
@@ -189,7 +301,7 @@ KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
         if (result.flag == KvazzFlag::Return)
             return result;
     }
-    return GOOD_NO_RETURN;
+    return GOOD_NO_VALUE;
 }
 
 
@@ -208,7 +320,7 @@ KvazzResult Interpreter::eval(IfThen &node, std::shared_ptr<Env> env) {
     if (test(node.condition->eval(*this, env))) {
         return node.body->eval(*this, env);
     }
-    return GOOD_NO_RETURN;
+    return GOOD_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env) {
@@ -226,7 +338,7 @@ KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env) {
         if(maybe_result.flag == KvazzFlag::Return)
             return maybe_result;
     }
-    return GOOD_NO_RETURN;
+    return GOOD_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
@@ -238,36 +350,26 @@ KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
         return KvazzResult { NOTHING, KvazzFlag::Error };
     }
 
+    // these should mostly all be broken out into their own functions once the logic has been figured out
+    // since there's potential for a lot of code to be in here.
+    // I want operators to have meaning on various types e.g. '+' is both arithemetic addition as well
+    // as string and maybe array concat as well. So lots of type checking code will be involved in
+    // operator code.
     KvazzResult result;
     switch(node.op_type) {
         case BinaryOpType::pipe:
         {
             // logical OR
-            result = KvazzResult {
-                KvazzValue {
-                    KvazzType::Bool,
-                    (test(left) || test(right))
-                },
-                KvazzFlag::Good
-            };
+            result = make_good_result(test(left) || test(right));
         }
         case BinaryOpType::amper:
         {
             // logical AND
-            result = KvazzResult {
-                KvazzValue {
-                    KvazzType::Bool,
-                    (test(left) && test(right))
-                },
-                KvazzFlag::Good
-            };
+            result = make_good_result(test(left) && test(right));
         }
         case BinaryOpType::equals:
         {
-            // if not same type, false
-            // if same type, compare values
-            // trivial for bool, int, real, and string
-            // for vector will need to iterate over every element and compare kvazzvalue with same rules
+            result = make_good_result(kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::not_equals:
         {}
