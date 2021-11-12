@@ -152,6 +152,9 @@ bool test(KvazzResult kr) {
                 return real_value == 0.0 ? false : true;
             }
         case KvazzType::Nothing:
+            {
+                return false;
+            }
         case KvazzType::Builtin:
         case KvazzType::LValue:
         default:
@@ -275,7 +278,6 @@ KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, sha
     return GOOD_NO_VALUE;
 }
 
-
 /*
 *  AST-eval Interpreter class methods
 */
@@ -359,38 +361,62 @@ KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
     switch(node.op_type) {
         case BinaryOpType::pipe:
         {
+            // defined on all types through truthy/falsey -ness
             // logical OR
             result = make_good_result(test(left) || test(right));
         }
         case BinaryOpType::amper:
         {
+            // defined on all types through truthy/falsey -ness
             // logical AND
             result = make_good_result(test(left) && test(right));
         }
         case BinaryOpType::equals:
         {
+            // defined on all types
             result = make_good_result(kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::not_equals:
-        {}
+        {
+            // defined on all types
+            result = make_good_result(!kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
+        }
         case BinaryOpType::less_equals:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::greater_equals:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::less_than:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::greater_than:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::plus:
-        {}
+        {
+            // defined for numeric types (as arithmetic plus), strings, and vectors (as concat)
+        }
         case BinaryOpType::minus:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::multiply:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::divide:
-        {}
+        {
+            // defined for numeric types
+        }
         case BinaryOpType::modulo:
-        {}
+        {
+            // defined on integers only
+        }
     }
     return result;
 }
