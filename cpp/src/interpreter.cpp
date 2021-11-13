@@ -38,6 +38,8 @@ Visitor interface can be repurposed to write a single-pass AST compiler too
 
 KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
 
+KvazzResult ERROR_NO_VALUE = KvazzResult { NOTHING, KvazzFlag::Error };
+
 KvazzResult GOOD_NO_VALUE = KvazzResult { NOTHING, KvazzFlag::Good };
 
 KvazzResult GOOD_BOOL_TRUE = KvazzResult {
@@ -166,21 +168,266 @@ bool test(KvazzResult kr) {
     return false;
 }
 
+// these functions can probably go into a different file... maybe asteval.cpp
+
+KvazzResult kvazzvalue_plus(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+
+    if(left_type == right_type) {
+        if(left_type == KvazzType::Int) {
+            return make_good_result(std::get<int>(kv1.value) + std::get<int>(kv2.value));
+        }
+        if(left_type == KvazzType::Real) {
+            return make_good_result(std::get<double>(kv1.value) + std::get<double>(kv2.value));
+        }
+        if(left_type == KvazzType::String) {
+            return make_good_result(std::get<string>(kv1.value) + std::get<string>(kv2.value));
+        }
+        if(left_type == KvazzType::Hevec) {
+            auto left_vec = std::get<vector<KvazzValue>>(kv1.value);
+            auto &right_vec = std::get<vector<KvazzValue>>(kv2.value);
+            left_vec.insert( left_vec.end(), right_vec.begin(), right_vec.end() );
+            return make_good_result(left_vec);
+        }
+    }
+    else if (left_type == KvazzType::Int) {
+        if(right_type == KvazzType::Real) {
+            auto left_value = std::get<int>(kv1.value);
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value + right_value);
+        }
+    }
+    else if (left_type == KvazzType::Real) {
+        if(right_type == KvazzType::Int) {
+            auto left_value = std::get<double>(kv1.value);
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value + right_value);
+        }
+    }
+
+    return ERROR_NO_VALUE;
+}
+
+
+KvazzResult kvazzvalue_modulo(KvazzValue kv1, KvazzValue kv2) {
+    if (kv1.type == KvazzType::Int && kv2.type == KvazzType::Int) {
+        return make_good_result(std::get<int>(kv1.value) % std::get<int>(kv2.value));
+    }
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult kvazzvalue_divide(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value / right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value / right_value);
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value / right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value / right_value);
+        }
+    }
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult kvazzvalue_multiply(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value * right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value * right_value);
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value * right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value * right_value);
+        }
+    }
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult kvazzvalue_minus(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value - right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value - right_value);
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return make_good_result(left_value - right_value);
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return make_good_result(left_value - right_value);
+        }
+    }
+    return ERROR_NO_VALUE;
+}
+
+bool kvazzvalue_less_equals(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value <= right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value <= right_value;
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value <= right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value <= right_value;
+        }
+    }
+    return false;
+}
+
+bool kvazzvalue_less_than(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value < right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value < right_value;
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value < right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value < right_value;
+        }
+    }
+    return false;
+}
+
+bool kvazzvalue_greater_equals(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value >= right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value >= right_value;
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value >= right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value >= right_value;
+        }
+    }
+    return false;
+}
+
+bool kvazzvalue_greater_than(KvazzValue kv1, KvazzValue kv2) {
+    auto left_type = kv1.type;
+    auto right_type = kv2.type;
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value > right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value > right_value;
+        }
+    }
+    else {
+        auto left_value = std::get<double>(kv1.value);
+        if(right_type == KvazzType::Int) {
+            auto right_value = std::get<int>(kv2.value);
+            return left_value > right_value;
+        }
+        else {
+            auto right_value = std::get<double>(kv2.value);
+            return left_value > right_value;
+        }
+    }
+    return false;
+}
+
 bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
 
-    if (is_numeric_type(left_type) && is_numeric_type(right_type) ) {
-        // does c++ even allow this? lol
-        auto left_value = kv1.type == KvazzType::Int ?
-                std::get<int>(kv1.value) : std::get<double>(kv1.value);
-        auto right_value = kv2.type == KvazzType::Int ?
-                std::get<int>(kv2.value) : std::get<double>(kv2.value);
-        return left_value == right_value;
-
-    }
-
     if (left_type != right_type) {
+        if (left_type == KvazzType::Int && right_type == KvazzType::Real) {
+            auto left_value = std::get<int>(kv1.value);
+            auto right_value = std::get<double>(kv2.value);
+            return left_value == right_value;
+        }
+        else if (left_type == KvazzType::Real && right_type == KvazzType::Int) {
+            auto left_value = std::get<double>(kv1.value);
+            auto right_value = std::get<int>(kv2.value);
+            return left_value == right_value;
+        }
         return false;
     }
 
@@ -192,14 +439,12 @@ bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
     }
 
     if (left_type == KvazzType::Hevec) {
-
         auto vec1 = std::get<vector<KvazzValue>>(kv1.value);
         auto vec2 = std::get<vector<KvazzValue>>(kv2.value);
         if(vec1.size() != vec2.size()) {
             return false;
         }
 
-        // for x, y in zip(left, right), if x != y return false, finally return true
         for (int i = 0; i < vec1.size(); ++i) {
             if (!kvazzvalue_equals(vec1[i], vec2[i])) {
                 return false;
@@ -207,12 +452,10 @@ bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
         }
         return true;
     }
-
     // last compare case for now. Not sure if I want to be able to compare functions or
     // built ins... comparing AST might be interesting. Another compare operator x =@= y
     // that checks whether or not x and y are the same object might be useful but hard to
     // implement.
-
     return false;
 }
 
@@ -384,38 +627,47 @@ KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
         case BinaryOpType::less_equals:
         {
             // defined for numeric types
+            result = make_good_result(kvazzvalue_less_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::greater_equals:
         {
             // defined for numeric types
+            result = make_good_result(kvazzvalue_greater_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::less_than:
         {
             // defined for numeric types
+            result = make_good_result(kvazzvalue_less_than(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::greater_than:
         {
             // defined for numeric types
+            result = make_good_result(kvazzvalue_greater_than(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::plus:
         {
             // defined for numeric types (as arithmetic plus), strings, and vectors (as concat)
+            result = kvazzvalue_plus(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::minus:
         {
             // defined for numeric types
+            result = kvazzvalue_minus(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::multiply:
         {
             // defined for numeric types
+            result = kvazzvalue_multiply(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::divide:
         {
             // defined for numeric types
+            result = kvazzvalue_divide(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::modulo:
         {
             // defined on integers only
+            result = kvazzvalue_modulo(left.kvazz_value, right.kvazz_value);
         }
     }
     return result;
