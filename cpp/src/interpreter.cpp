@@ -469,7 +469,6 @@ Env global_env {
     unordered_map<string, EnvEntry>()
 };
 
-
 LookupResult lookup(string identifier, shared_ptr<Env> env) {
     auto result = built_in_function_table.find(identifier);
     if (result != built_in_function_table.end()) {
@@ -539,8 +538,33 @@ KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(AssignOp &node, std::shared_ptr<Env> env);
 
-KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env) {
+    auto result = env->table.find(node.identifier);
+    if (result == env->table.end()) {
+        auto kv = node.expr_node->eval(*this, env);
+        env->table[node.identifier] = EnvEntry { EnvResultType::Value, std::move(kv) };
+        return GOOD_NO_VALUE;
+    }
+    std::cerr << "Identifier \'" << node.identifier << "\' already defined in this scope\n";
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env) {
+    auto result = env->table.find(node.identifier);
+    if (result == env->table.end()) {
+        env->table[node.identifier] = EnvEntry {
+            EnvResultType::Function,
+            KvazzFunction {
+                node.identifier,
+                std::move(node.args),
+                node.body
+            }
+        };
+        return GOOD_NO_VALUE;
+    }
+    std::cerr << "Identifier \'" << node.identifier << "\' already defined in this scope\n";
+    return ERROR_NO_VALUE;
+}
 
 KvazzResult Interpreter::eval(Return &node, std::shared_ptr<Env> env) {
     auto expression_result = node.expr_node->eval(*this, env);

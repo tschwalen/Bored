@@ -120,11 +120,10 @@ public:
 
 class Declare : public BaseNode 
 {
-private:
+public:
     std::string identifier;
     std::shared_ptr<BaseNode> expr_node;
 
-public:
     Declare(std::string identifier_, std::shared_ptr<BaseNode> expr_node_)
         : identifier { identifier_ }, expr_node {expr_node_} {}
 
@@ -141,12 +140,11 @@ public:
 
 class FunctionDeclare : public BaseNode 
 {
-private:
+public:
     std::string identifier;
     std::vector<std::string> args;
     std::shared_ptr<BaseNode> body;
 
-public:
     FunctionDeclare (std::string identifier_, std::vector<std::string> args_, std::shared_ptr<BaseNode> body_) 
         : identifier { identifier_ }, args { std::move(args_) }, body { body_ } {} 
     
