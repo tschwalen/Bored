@@ -13,29 +13,6 @@ using std::shared_ptr;
 using std::vector;
 using std::string;
 
-/*
-Note: 
-
-I've reached a point in the design of the interpreter where I've realized that
-I need to rethink some design decisions. I think the best practice thing to
-do at this point is to implement the AST interpreter using a visitor design
-pattern.
-
-If this fails, then I supposed every AST node could have an "eval" method,
-but this is pretty nasty from a separation of concerns perspective.
-
-
-Visitor design pattern:
-
-Interpreter is now a class with a Visit/Dispatch method for every node type
-- Basically the methods I have written get repurposed 
-- Added benefit of encapsulating the global_env in the class, cleaner than
-    having a global variable
-- Built-ins, metadata, etc can be static fields
-
-Visitor interface can be repurposed to write a single-pass AST compiler too
-*/
-
 KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
 
 KvazzResult ERROR_NO_VALUE = KvazzResult { NOTHING, KvazzFlag::Error };
@@ -170,7 +147,7 @@ bool test(KvazzResult kr) {
 
 // these functions can probably go into a different file... maybe asteval.cpp
 
-KvazzResult kvazzvalue_plus(KvazzValue kv1, KvazzValue kv2) {
+KvazzResult kvazzvalue_plus(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
 
@@ -210,14 +187,14 @@ KvazzResult kvazzvalue_plus(KvazzValue kv1, KvazzValue kv2) {
 }
 
 
-KvazzResult kvazzvalue_modulo(KvazzValue kv1, KvazzValue kv2) {
+KvazzResult kvazzvalue_modulo(KvazzValue &kv1, KvazzValue &kv2) {
     if (kv1.type == KvazzType::Int && kv2.type == KvazzType::Int) {
         return make_good_result(std::get<int>(kv1.value) % std::get<int>(kv2.value));
     }
     return ERROR_NO_VALUE;
 }
 
-KvazzResult kvazzvalue_divide(KvazzValue kv1, KvazzValue kv2) {
+KvazzResult kvazzvalue_divide(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -245,7 +222,7 @@ KvazzResult kvazzvalue_divide(KvazzValue kv1, KvazzValue kv2) {
     return ERROR_NO_VALUE;
 }
 
-KvazzResult kvazzvalue_multiply(KvazzValue kv1, KvazzValue kv2) {
+KvazzResult kvazzvalue_multiply(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -273,7 +250,7 @@ KvazzResult kvazzvalue_multiply(KvazzValue kv1, KvazzValue kv2) {
     return ERROR_NO_VALUE;
 }
 
-KvazzResult kvazzvalue_minus(KvazzValue kv1, KvazzValue kv2) {
+KvazzResult kvazzvalue_minus(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -301,7 +278,7 @@ KvazzResult kvazzvalue_minus(KvazzValue kv1, KvazzValue kv2) {
     return ERROR_NO_VALUE;
 }
 
-bool kvazzvalue_less_equals(KvazzValue kv1, KvazzValue kv2) {
+bool kvazzvalue_less_equals(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -329,7 +306,7 @@ bool kvazzvalue_less_equals(KvazzValue kv1, KvazzValue kv2) {
     return false;
 }
 
-bool kvazzvalue_less_than(KvazzValue kv1, KvazzValue kv2) {
+bool kvazzvalue_less_than(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -357,7 +334,7 @@ bool kvazzvalue_less_than(KvazzValue kv1, KvazzValue kv2) {
     return false;
 }
 
-bool kvazzvalue_greater_equals(KvazzValue kv1, KvazzValue kv2) {
+bool kvazzvalue_greater_equals(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -385,7 +362,7 @@ bool kvazzvalue_greater_equals(KvazzValue kv1, KvazzValue kv2) {
     return false;
 }
 
-bool kvazzvalue_greater_than(KvazzValue kv1, KvazzValue kv2) {
+bool kvazzvalue_greater_than(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
     if (left_type == KvazzType::Int) {
@@ -413,7 +390,7 @@ bool kvazzvalue_greater_than(KvazzValue kv1, KvazzValue kv2) {
     return false;
 }
 
-bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
+bool kvazzvalue_equals(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
 
@@ -457,6 +434,16 @@ bool kvazzvalue_equals(KvazzValue kv1, KvazzValue kv2) {
     // that checks whether or not x and y are the same object might be useful but hard to
     // implement.
     return false;
+}
+
+KvazzResult Kvazzvalue_unary_minus(KvazzValue &kv) {
+    if (kv.type == KvazzType::Int) {
+        return make_good_result( -std::get<int>(kv.value));
+    }
+    if(kv.type == KvazzType::Real) {
+       return make_good_result( -std::get<double>(kv.value));
+    }
+    return ERROR_NO_VALUE;
 }
 
 enum built_in_function_ids {
@@ -673,15 +660,56 @@ KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
     return result;
 }
 
-KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env) {
+    auto right = node.right_expr->eval(*this, env);
+    if (right.flag == KvazzFlag::Error) {
+        // might should do a system exit here... not sure, better error handling will come
+        return KvazzResult { NOTHING, KvazzFlag::Error };
+    }
+    KvazzResult result;
+    switch(node.op_type) {
+        case UnaryOpType::bang:
+        {
+            // defined on all valid types
+            result = make_good_result(test(right));
+        }
+        case UnaryOpType::minus:
+        {
+            // defined on numeric types
+            result = Kvazzvalue_unary_minus(right.kvazz_value);
+        }
+    }
+    return result;
+
+}
 KvazzResult Interpreter::eval(FunctionCall &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(Access &node, std::shared_ptr<Env> env);
 KvazzResult Interpreter::eval(VariableLookup &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(IntLiteral &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(BoolLiteral &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(RealLiteral &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(StringLiteral &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(VectorLiteral &node, std::shared_ptr<Env> env);
+
+KvazzResult Interpreter::eval(IntLiteral &node, std::shared_ptr<Env> env) {
+    return make_good_result(node.literal_value);
+}
+
+KvazzResult Interpreter::eval(BoolLiteral &node, std::shared_ptr<Env> env) {
+    return make_good_result(node.literal_value);
+}
+
+KvazzResult Interpreter::eval(RealLiteral &node, std::shared_ptr<Env> env) {
+    return make_good_result(node.literal_value);
+}
+KvazzResult Interpreter::eval(StringLiteral &node, std::shared_ptr<Env> env) {
+    return make_good_result(node.literal_value);
+}
+KvazzResult Interpreter::eval(VectorLiteral &node, std::shared_ptr<Env> env) {
+    vector<KvazzValue> results;
+    for(auto nd : node.contents) {
+        auto result = nd->eval(*this, env);
+        if (result.flag == KvazzFlag::Good) {
+            results.push_back(result.kvazz_value);
+        }
+    }
+    return make_good_result(std::move(results));
+}
 
 
 //KvazzResult eval_assignop(shared_ptr<BaseNode> node, shared_ptr<Env> env) {

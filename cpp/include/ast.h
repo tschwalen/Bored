@@ -266,9 +266,10 @@ class UnaryOp : public BaseNode
 {
 private:
     std::string op;
+public:
     UnaryOpType op_type;
     std::shared_ptr<BaseNode> right_expr;
-public:
+
     UnaryOp (std::string op_, std::shared_ptr<BaseNode> right_expr_)
         : op { op_ }, op_type { get_unary_op(op_) }, right_expr {right_expr_} {}
 
@@ -347,9 +348,9 @@ public:
 
 class IntLiteral : public BaseNode
 {
-private:
-    int literal_value;
 public:
+    int literal_value;
+
     IntLiteral (int literal_value_)
         : literal_value { literal_value_ } {}
 
@@ -366,9 +367,9 @@ public:
 
 class BoolLiteral : public BaseNode
 {
-private:
-    bool literal_value;
 public:
+    bool literal_value;
+
     BoolLiteral (bool literal_value_)
         : literal_value { literal_value_ } {}
 
@@ -385,9 +386,9 @@ public:
 
 class RealLiteral : public BaseNode 
 {
-private:
-    double literal_value;
 public:
+    double literal_value;
+
     RealLiteral (double literal_value_)
         : literal_value { literal_value_ } {}
 
@@ -404,9 +405,9 @@ public:
 
 class StringLiteral : public BaseNode 
 {
-private:
-    std::string literal_value;
 public:
+    std::string literal_value;
+
     StringLiteral (std::string literal_value_)
         : literal_value { literal_value_ } {}
 
@@ -424,9 +425,9 @@ public:
 /*  Deal with homogeneous vectors later */
 class VectorLiteral : public BaseNode 
 {
-private:
-    std::vector<std::shared_ptr<BaseNode>> contents;
 public:
+    std::vector<std::shared_ptr<BaseNode>> contents;
+
     VectorLiteral (std::vector<std::shared_ptr<BaseNode>> contents_)
         : contents { std::move(contents_) } {}
 
