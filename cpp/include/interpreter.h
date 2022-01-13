@@ -12,7 +12,7 @@ KvazzResult call_function(KvazzFunction &fn, std::vector<KvazzValue> &arg_values
 
 class Interpreter : public AstEvaluator {
 private:
-    bool lvalue_flag;
+    bool lvalue_flag = false;
 
 public:
     virtual KvazzResult eval(Program &node, std::shared_ptr<Env> env) override;

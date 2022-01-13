@@ -11,13 +11,14 @@
 */
 
 struct LValue;
+struct KvazzFunction;
 
 enum class KvazzFlag {
     Good, Error, Return
 };
 
 enum class KvazzType {
-    Nothing, LValue, Builtin, Int, Real, Bool, String, Hevec
+    Nothing, LValue, Builtin, Int, Real, Bool, String, Hevec, Function
 };
 
 enum class EnvResultType {
@@ -27,7 +28,7 @@ enum class EnvResultType {
 struct KvazzValue
 {
     KvazzType type;
-    std::variant<int, double, bool, std::string, std::vector<KvazzValue>, LValue> value;
+    std::variant<int, double, bool, std::string, std::vector<KvazzValue>, LValue, KvazzFunction> value;
 };
 
 struct KvazzFunction

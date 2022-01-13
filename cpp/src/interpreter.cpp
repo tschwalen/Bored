@@ -510,7 +510,7 @@ KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, sha
 /*
 *  AST-eval Interpreter class methods
 */
-KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(Program &node, shared_ptr<Env> env) {
     for (auto nd : node.children()) {
         nd->eval(*this, env);
     }
@@ -524,7 +524,7 @@ KvazzResult Interpreter::eval(Program &node, std::shared_ptr<Env> env) {
     return GOOD_NO_VALUE;
 }
 
-KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(Block &node, shared_ptr<Env> env) {
     auto local_env = std::make_shared<Env>(env, unordered_map<string, EnvEntry>());
 
     for (auto nd : node.children()) {
@@ -536,9 +536,9 @@ KvazzResult Interpreter::eval(Block &node, std::shared_ptr<Env> env) {
 }
 
 
-KvazzResult Interpreter::eval(AssignOp &node, std::shared_ptr<Env> env);
+KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env);
 
-KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(Declare &node, shared_ptr<Env> env) {
     auto result = env->table.find(node.identifier);
     if (result == env->table.end()) {
         auto kv = node.expr_node->eval(*this, env);
@@ -549,7 +549,7 @@ KvazzResult Interpreter::eval(Declare &node, std::shared_ptr<Env> env) {
     return ERROR_NO_VALUE;
 }
 
-KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(FunctionDeclare &node, shared_ptr<Env> env) {
     auto result = env->table.find(node.identifier);
     if (result == env->table.end()) {
         env->table[node.identifier] = EnvEntry {
@@ -566,20 +566,20 @@ KvazzResult Interpreter::eval(FunctionDeclare &node, std::shared_ptr<Env> env) {
     return ERROR_NO_VALUE;
 }
 
-KvazzResult Interpreter::eval(Return &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(Return &node, shared_ptr<Env> env) {
     auto expression_result = node.expr_node->eval(*this, env);
     expression_result.flag = KvazzFlag::Return;
     return expression_result;
 }
 
-KvazzResult Interpreter::eval(IfThen &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(IfThen &node, shared_ptr<Env> env) {
     if (test(node.condition->eval(*this, env))) {
         return node.body->eval(*this, env);
     }
     return GOOD_NO_VALUE;
 }
 
-KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(IfElse &node, shared_ptr<Env> env) {
     if (test(node.condition->eval(*this, env))) {
         return node.then_body->eval(*this, env);
     }
@@ -588,7 +588,7 @@ KvazzResult Interpreter::eval(IfElse &node, std::shared_ptr<Env> env) {
     }
 }
 
-KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(While &node, shared_ptr<Env> env) {
     while (test(node.condition->eval(*this, env))) {
         auto maybe_result = node.body->eval(*this, env);
         if(maybe_result.flag == KvazzFlag::Return)
@@ -597,7 +597,7 @@ KvazzResult Interpreter::eval(While &node, std::shared_ptr<Env> env) {
     return GOOD_NO_VALUE;
 }
 
-KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(BinaryOp &node, shared_ptr<Env> env) {
     auto left = node.left_expr->eval(*this, env);
     auto right = node.right_expr->eval(*this, env);
 
@@ -684,7 +684,7 @@ KvazzResult Interpreter::eval(BinaryOp &node, std::shared_ptr<Env> env) {
     return result;
 }
 
-KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(UnaryOp &node, shared_ptr<Env> env) {
     auto right = node.right_expr->eval(*this, env);
     if (right.flag == KvazzFlag::Error) {
         // might should do a system exit here... not sure, better error handling will come
@@ -706,25 +706,43 @@ KvazzResult Interpreter::eval(UnaryOp &node, std::shared_ptr<Env> env) {
     return result;
 
 }
-KvazzResult Interpreter::eval(FunctionCall &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(Access &node, std::shared_ptr<Env> env);
-KvazzResult Interpreter::eval(VariableLookup &node, std::shared_ptr<Env> env);
 
-KvazzResult Interpreter::eval(IntLiteral &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
+    auto callee_expr_result = node.callee->eval(*this, env);
+    if (callee_expr_result.flag != KvazzFlag::Error &&
+        callee_expr_result.kvazz_value.type == KvazzType::Function)
+    {
+        auto function = std::get<KvazzFunction>(callee_expr_result.kvazz_value.value);
+        vector<KvazzValue> arg_values;
+        for (auto &expr_arg : node.expr_args)
+            arg_values.push_back(expr_arg->eval(*this, env).kvazz_value);
+        return call_function(function, arg_values, env);
+    }
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
+    // need to handle lvalue and default case
+}
+KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
+    // need to handle lvalue and default case
+}
+
+KvazzResult Interpreter::eval(IntLiteral &node, shared_ptr<Env> env) {
     return make_good_result(node.literal_value);
 }
 
-KvazzResult Interpreter::eval(BoolLiteral &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(BoolLiteral &node, shared_ptr<Env> env) {
     return make_good_result(node.literal_value);
 }
 
-KvazzResult Interpreter::eval(RealLiteral &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(RealLiteral &node, shared_ptr<Env> env) {
     return make_good_result(node.literal_value);
 }
-KvazzResult Interpreter::eval(StringLiteral &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(StringLiteral &node, shared_ptr<Env> env) {
     return make_good_result(node.literal_value);
 }
-KvazzResult Interpreter::eval(VectorLiteral &node, std::shared_ptr<Env> env) {
+KvazzResult Interpreter::eval(VectorLiteral &node, shared_ptr<Env> env) {
     vector<KvazzValue> results;
     for(auto nd : node.contents) {
         auto result = nd->eval(*this, env);

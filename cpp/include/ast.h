@@ -284,11 +284,10 @@ public:
 
 class FunctionCall : public BaseNode
 {
-private:
+public:
     std::shared_ptr<BaseNode> callee;
     std::vector<std::shared_ptr<BaseNode>> expr_args;
 
-public:
     FunctionCall (std::shared_ptr<BaseNode> callee_, std::vector<std::shared_ptr<BaseNode>> expr_args_)
         : callee { callee_ }, expr_args { std::move(expr_args_) } {}
 
