@@ -4,18 +4,21 @@
 #include <fstream>
 #include <unordered_set> 
 
+using std::string;
+using std::vector;
+using std::unordered_set;
 
-std::unordered_set<std::string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
-std::unordered_set<std::string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":", "$"  } );
-std::unordered_set<std::string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=", "<[", "]>" } );
+unordered_set<string> keywords        ( {"var", "if", "then", "else", "for", "while", "do", "in", "function", "return"} );
+unordered_set<string> symbols         ( {"{", "}", "(", ")", "[", "]", "<", ">", "+", "-", "*", "/", "%", "!", "?", "=", ".", ",", "&", "|", ";", ":", "$"  } );
+unordered_set<string> multi           ( { "==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "%=", "<[", "]>" } );
 
 bool is_id_char(char c) {
     return isdigit(c) || isalpha(c) || c == '_';
 }
 
-std::vector<Token> lex_string ( std::string &source ) {
+vector<Token> lex_string ( string &source ) {
 
-    std::vector<Token> tokens;
+    vector<Token> tokens;
     int index = 0;
 
     while ( index < source.size() ) {
@@ -39,7 +42,7 @@ std::vector<Token> lex_string ( std::string &source ) {
                 while ( end < source.size() && is_id_char(source[end]) ) {
                     ++end;
                 }
-                std::string word = source.substr(index, end - index);
+                string word = source.substr(index, end - index);
                 Token token;
 
                 // unordered_set.contains() only came out in c++20, so count > 0 is a less-readable way to check set membership
@@ -73,11 +76,11 @@ std::vector<Token> lex_string ( std::string &source ) {
                     while ( end < source.size() && isdigit(source[end]) ) {
                         ++end;
                     }
-                    std::string real = source.substr(index, end - index);
+                    string real = source.substr(index, end - index);
                     token = Token { real, TokenType::real_literal };
                 }
                 else {
-                    std::string integer = source.substr(index, end - index);
+                    string integer = source.substr(index, end - index);
                     token = Token { integer, TokenType::int_literal };
                 }
                 tokens.push_back(token);
@@ -94,7 +97,7 @@ std::vector<Token> lex_string ( std::string &source ) {
                 while ( end < source.size() && source[end] != quote ) {
                     ++end;
                 }
-                std::string string_value = source.substr(index + 1, end - (index + 1));
+                string string_value = source.substr(index + 1, end - (index + 1));
                 Token token = Token { string_value, TokenType::string_literal };
                 tokens.push_back(token);
                 index = end + 1;
@@ -104,16 +107,16 @@ std::vector<Token> lex_string ( std::string &source ) {
             *   Handle operators and other punctuation-based symbols
             *
             */
-            else if (symbols.count(std::string(1, source[index])) > 0) {
+            else if (symbols.count(string(1, source[index])) > 0) {
                 int end = index + 2;
                 Token token;
                 if ( end <= source.size() && ( multi.count(source.substr(index, end - index)) > 0) ) {
-                    std::string symbol_value = source.substr(index, end - index);
+                    string symbol_value = source.substr(index, end - index);
                     token = Token { symbol_value, TokenType::symbol };
                     index = end;
                 }
                 else {
-                    token =  Token { std::string(1, source[index]), TokenType::symbol };
+                    token =  Token { string(1, source[index]), TokenType::symbol };
                     ++index;
                 }
                 tokens.push_back(token);
@@ -151,7 +154,7 @@ std::vector<Token> lex_string ( std::string &source ) {
     return tokens;
 }
 
-void tuple_print( std::vector<Token> &tokens ) {
+void tuple_print( vector<Token> &tokens ) {
     std::cout << "[" << std::endl;
     int i = 0;
     for (auto &tok : tokens) {
@@ -167,19 +170,19 @@ void tuple_print( std::vector<Token> &tokens ) {
 #ifdef LEXER
 int main( int argc, const char* argv[] ) {
     if( argc > 1 ) {
-        std::string source = argv[1];
+        string source = argv[1];
 
         // if file flag is used, read from file instead 
         if( source == "-f" && argc > 2 ) {
             /* at some point, should read files in chunks since in practice putting a whole file in memory could
             *  get impractical.
             */
-            std::string source_file = argv[2];
+            string source_file = argv[2];
             std::ifstream ifs(source_file);
             source.assign( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) );
         } 
 
-        std::vector<Token> tokens = lex_string(source);
+        vector<Token> tokens = lex_string(source);
         tuple_print(tokens);
     }
     return 0;
