@@ -96,7 +96,7 @@ bool is_numeric_type(KvazzType t) {
     return t == KvazzType::Int || t == KvazzType::Real;
 }
 
-bool test(KvazzResult kr) {
+bool truthy_test(KvazzResult kr) {
     /*
      *  Truthy-falsey test for every valid type a kvazz expression could evaluate to.
     */
@@ -464,10 +464,10 @@ unordered_map<string, int> built_in_function_table = {
 };
 
 // maybe this should be part of the interpreter class
-Env global_env {
+shared_ptr<Env> global_env = std::make_shared<Env> (
     nullptr, 
     unordered_map<string, EnvEntry>()
-};
+);
 
 LookupResult lookup(string identifier, shared_ptr<Env> env) {
     auto result = built_in_function_table.find(identifier);
@@ -573,14 +573,14 @@ KvazzResult Interpreter::eval(Return &node, shared_ptr<Env> env) {
 }
 
 KvazzResult Interpreter::eval(IfThen &node, shared_ptr<Env> env) {
-    if (test(node.condition->eval(*this, env))) {
+    if (truthy_test(node.condition->eval(*this, env))) {
         return node.body->eval(*this, env);
     }
     return GOOD_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(IfElse &node, shared_ptr<Env> env) {
-    if (test(node.condition->eval(*this, env))) {
+    if (truthy_test(node.condition->eval(*this, env))) {
         return node.then_body->eval(*this, env);
     }
     else {
@@ -589,7 +589,7 @@ KvazzResult Interpreter::eval(IfElse &node, shared_ptr<Env> env) {
 }
 
 KvazzResult Interpreter::eval(While &node, shared_ptr<Env> env) {
-    while (test(node.condition->eval(*this, env))) {
+    while (truthy_test(node.condition->eval(*this, env))) {
         auto maybe_result = node.body->eval(*this, env);
         if(maybe_result.flag == KvazzFlag::Return)
             return maybe_result;
@@ -617,13 +617,13 @@ KvazzResult Interpreter::eval(BinaryOp &node, shared_ptr<Env> env) {
         {
             // defined on all types through truthy/falsey -ness
             // logical OR
-            result = make_good_result(test(left) || test(right));
+            result = make_good_result(truthy_test(left) || truthy_test(right));
         }
         case BinaryOpType::amper:
         {
             // defined on all types through truthy/falsey -ness
             // logical AND
-            result = make_good_result(test(left) && test(right));
+            result = make_good_result(truthy_test(left) && truthy_test(right));
         }
         case BinaryOpType::equals:
         {
@@ -695,7 +695,7 @@ KvazzResult Interpreter::eval(UnaryOp &node, shared_ptr<Env> env) {
         case UnaryOpType::bang:
         {
             // defined on all valid types
-            result = make_good_result(test(right));
+            result = make_good_result(truthy_test(right));
         }
         case UnaryOpType::minus:
         {
@@ -718,6 +718,8 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
             arg_values.push_back(expr_arg->eval(*this, env).kvazz_value);
         return call_function(function, arg_values, env);
     }
+
+    // handle built-in function case
     return ERROR_NO_VALUE;
 }
 
@@ -726,6 +728,18 @@ KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
 }
 KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
     // need to handle lvalue and default case
+
+    // default case
+    auto env_to_use = node.sigil ? global_env : env;
+    auto lookup_result = lookup(node.identifier, env_to_use);
+    if (lookup_result.result.type == EnvResultType::Value) {
+        return make_good_result(std::get<KvazzValue>(lookup_result.result.contents));
+    }
+    if (lookup_result.result.type == EnvResultType::Function) {
+        return make_good_result(std::get<KvazzFunction>(lookup_result.result.contents));
+    }
+
+
 }
 
 KvazzResult Interpreter::eval(IntLiteral &node, shared_ptr<Env> env) {

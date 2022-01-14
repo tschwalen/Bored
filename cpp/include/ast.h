@@ -325,10 +325,10 @@ public:
 
 class VariableLookup : public BaseNode
 {
-private:
+public:
     std::string identifier;
     bool sigil;
-public:
+
     VariableLookup(std::string identifier_, bool sigil_)
         : identifier { identifier_ }, sigil { sigil_ } {}
 
