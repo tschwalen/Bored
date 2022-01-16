@@ -305,10 +305,10 @@ public:
 
 class Access : public BaseNode
 {
-private:
+public:
     std::shared_ptr<BaseNode> left_expr;
     std::shared_ptr<BaseNode> index_expr;
-public:
+
     Access (std::shared_ptr<BaseNode> left_expr_, std::shared_ptr<BaseNode> index_expr_)
         : left_expr { left_expr_ }, index_expr { index_expr_ } {}
 

@@ -725,6 +725,31 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
     // need to handle lvalue and default case
+
+    // default case
+    auto left_expr_result = node.left_expr->eval(*this, env);
+    auto index_expr_result = node.index_expr->eval(*this, env);
+    if (index_expr_result.kvazz_value.type == KvazzType::Int) {
+        if(left_expr_result.kvazz_value.type == KvazzType::Hevec) {
+            vector<KvazzValue> the_vec = std::get<vector<KvazzValue>>(left_expr_result.kvazz_value.value);
+            auto index = std::get<int>(index_expr_result.kvazz_value.value);
+            if (index < the_vec.size()) {
+                return make_good_result(the_vec[index]);
+            }
+            // error message if bounds check fails
+        }
+        if(left_expr_result.kvazz_value.type == KvazzType::String) {
+            string the_string = std::get<string>(left_expr_result.kvazz_value.value);
+            auto index = std::get<int>(index_expr_result.kvazz_value.value);
+            if (index < the_string.length()) {
+                return make_good_result(the_string.substr(index, 1));
+            }
+            // some kind of useful error message
+        }
+    }
+    // when dictionaries are added, other types of index values may be valid too
+
+
 }
 KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
     // need to handle lvalue and default case
