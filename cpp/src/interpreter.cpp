@@ -502,9 +502,20 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
     };
 }
 
-KvazzResult call_function(KvazzFunction &fn, vector<KvazzValue> &arg_values, shared_ptr<Env> env) {
-    // TEMP
-    return GOOD_NO_VALUE;
+KvazzResult call_function(
+        KvazzFunction &fn,
+        vector<KvazzValue> &arg_values,
+        shared_ptr<Env> env,
+        Interpreter &interpreter) {
+
+    unordered_map<string, EnvEntry> function_env_map;
+    auto argv_index = 0;
+    for (auto arg_name : fn.args) {
+        function_env_map.emplace(arg_name, EnvEntry {EnvResultType::Value, arg_values[argv_index]});
+        ++argv_index;
+    }
+    auto function_env = std::make_shared<Env> ( global_env, function_env_map );
+    return fn.body->eval(interpreter, function_env);
 }
 
 /*
@@ -519,7 +530,7 @@ KvazzResult Interpreter::eval(Program &node, shared_ptr<Env> env) {
     if (main_found != env->table.end()) {
         auto main_method = std::get<KvazzFunction>(main_found->second.contents);
         vector<KvazzValue> args;
-        call_function(main_method, args, env);
+        call_function(main_method, args, env, this);
     }
     return GOOD_NO_VALUE;
 }
@@ -541,7 +552,7 @@ KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env);
 KvazzResult Interpreter::eval(Declare &node, shared_ptr<Env> env) {
     auto result = env->table.find(node.identifier);
     if (result == env->table.end()) {
-        auto kv = node.expr_node->eval(*this, env);
+        auto kv = node.expr_node->eval(*this, env).kvazz_value;
         env->table[node.identifier] = EnvEntry { EnvResultType::Value, std::move(kv) };
         return GOOD_NO_VALUE;
     }
@@ -716,7 +727,7 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
         vector<KvazzValue> arg_values;
         for (auto &expr_arg : node.expr_args)
             arg_values.push_back(expr_arg->eval(*this, env).kvazz_value);
-        return call_function(function, arg_values, env);
+        return call_function(function, arg_values, env, this);
     }
 
     // handle built-in function case
@@ -725,6 +736,8 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
     // need to handle lvalue and default case
+
+    // I think we're going to make strings immutable
 
     // default case
     auto left_expr_result = node.left_expr->eval(*this, env);
