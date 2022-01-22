@@ -44,6 +44,8 @@ struct KvazzResult
     KvazzFlag  flag;
 };
 
+/* TODO: EnvEntry seems redundant. I think the code should be rewritten to replace EntEntry with
+   KvazzValue. I'll leave this for a future improvement though. */
 struct EnvEntry 
 {
     EnvResultType type;
@@ -59,7 +61,7 @@ struct Env
 
 struct LValue {
     KvazzType type; // Nothing : env
-    std::variant<std::string, std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
+    std::variant<std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
     std::variant<int, std::string> index;
 };
 

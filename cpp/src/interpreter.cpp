@@ -85,6 +85,62 @@ KvazzResult make_good_result(vector<KvazzValue> value) {
         KvazzFlag::Good
     };
 }
+
+KvazzResult make_good_result(LValue value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::LValue,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(KvazzFunction value) {
+    return KvazzResult {
+        KvazzValue {
+            KvazzType::Function,
+            value
+        },
+        KvazzFlag::Good
+    };
+}
+
+KvazzResult make_good_result(KvazzValue value) {
+    //switch on every type and then just call make_good_result once you std::get the type
+    KvazzResult result;
+    switch(value.type) {
+        case KvazzType::Bool:
+            {
+                result = make_good_result(std::get<bool>(value.value));
+            }
+        case KvazzType::Int:
+            {
+                result = make_good_result(std::get<int>(value.value));
+            }
+        case KvazzType::String:
+            {
+                result = std::get<string>(value.value);
+            }
+        case KvazzType::Hevec:
+            {
+                result = std::get<vector<KvazzValue>>(value.value);
+            }
+        case KvazzType::Real:
+            {
+                result = std::get<double>(value.value);
+            }
+        case KvazzType::Nothing:
+        case KvazzType::Builtin:
+        case KvazzType::LValue:
+        default:
+            {
+                std::cerr << "Attempted to make_good_value on invalid KvazzType.\n";
+            }
+    }
+    return result;
+}
+
 /* 
 *   Utility Functions
 */
@@ -502,6 +558,10 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
     };
 }
 
+
+/**
+ *  Calls the passed KvazzFunction with the specified args
+ */
 KvazzResult call_function(
         KvazzFunction &fn,
         vector<KvazzValue> &arg_values,
@@ -537,7 +597,6 @@ KvazzResult Interpreter::eval(Program &node, shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(Block &node, shared_ptr<Env> env) {
     auto local_env = std::make_shared<Env>(env, unordered_map<string, EnvEntry>());
-
     for (auto nd : node.children()) {
         auto result = nd->eval(*this, local_env);
         if (result.flag == KvazzFlag::Return)
@@ -546,8 +605,28 @@ KvazzResult Interpreter::eval(Block &node, shared_ptr<Env> env) {
     return GOOD_NO_VALUE;
 }
 
+KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env) {
 
-KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env);
+    // first thing to do is to get the LValue. The Lvalue tells us what kind of
+    // assignment is taking place. So far we're just allowing assignment to a
+    // variable name in an env, or to an index in a list/array.
+
+    /*
+    struct LValue {
+        KvazzType type; // Nothing : env
+        std::variant<std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
+        std::variant<int, std::string> index;
+    };
+    */
+
+    // set the lvalue flag so that the next eval will return an lvalue
+    this->lvalue_flag = true;
+    LValue lvalue = std::get<LValue>(node.lvalue->eval(*this, env).kvazz_value.value);
+
+    // TODO: handle the various LValue cases
+
+
+}
 
 KvazzResult Interpreter::eval(Declare &node, shared_ptr<Env> env) {
     auto result = env->table.find(node.identifier);
@@ -730,16 +809,16 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
         return call_function(function, arg_values, env, this);
     }
 
-    // handle built-in function case
+    // TODO: handle built-in function case
     return ERROR_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
-    // need to handle lvalue and default case
+    // Take note that the lvalue flag was set, and then turn it off so that subsequent eval
+    // calls don't return an lvalue, e.g. vector[index1][index2]
+    auto was_lvalue_flag_set = this->lvalue_flag;
+    this->lvalue_flag = false;
 
-    // I think we're going to make strings immutable
-
-    // default case
     auto left_expr_result = node.left_expr->eval(*this, env);
     auto index_expr_result = node.index_expr->eval(*this, env);
     if (index_expr_result.kvazz_value.type == KvazzType::Int) {
@@ -747,37 +826,63 @@ KvazzResult Interpreter::eval(Access &node, shared_ptr<Env> env) {
             vector<KvazzValue> the_vec = std::get<vector<KvazzValue>>(left_expr_result.kvazz_value.value);
             auto index = std::get<int>(index_expr_result.kvazz_value.value);
             if (index < the_vec.size()) {
-                return make_good_result(the_vec[index]);
+                if (was_lvalue_flag_set) {
+                    // make an lvalue and return that instead
+                    LValue lvalue { KvazzType::Hevec, the_vec, index };
+                    return make_good_result(lvalue);
+                } else {
+                    return make_good_result(the_vec[index]);
+                }
             }
-            // error message if bounds check fails
+            else {
+                std::cerr << "Index " << index << " out of bounds for vector";
+            }
         }
         if(left_expr_result.kvazz_value.type == KvazzType::String) {
             string the_string = std::get<string>(left_expr_result.kvazz_value.value);
             auto index = std::get<int>(index_expr_result.kvazz_value.value);
             if (index < the_string.length()) {
-                return make_good_result(the_string.substr(index, 1));
+                if (was_lvalue_flag_set) {
+                    // make an lvalue and return that instead
+                    std::cerr << "Strings are immutable, assigning to index is not supported.\n";
+                }
+                else {
+                    return make_good_result(the_string.substr(index, 1));
+                }
             }
-            // some kind of useful error message
+            else {
+                std::cerr << "Index " << index << " out of bounds for \"" << the_string << "\"";
+            }
         }
     }
     // when dictionaries are added, other types of index values may be valid too
 
-
+    return ERROR_NO_VALUE;
 }
-KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
-    // need to handle lvalue and default case
 
-    // default case
+KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
+    auto was_lvalue_flag_set = this->lvalue_flag;
+    this->lvalue_flag = false;
+
     auto env_to_use = node.sigil ? global_env : env;
     auto lookup_result = lookup(node.identifier, env_to_use);
     if (lookup_result.result.type == EnvResultType::Value) {
+        if (was_lvalue_flag_set) {
+            LValue lvalue {KvazzType::Nothing, lookup_result.env, node.identifier};
+            return make_good_result(lvalue);
+        }
         return make_good_result(std::get<KvazzValue>(lookup_result.result.contents));
     }
     if (lookup_result.result.type == EnvResultType::Function) {
-        return make_good_result(std::get<KvazzFunction>(lookup_result.result.contents));
+        if (was_lvalue_flag_set) {
+            // Maybe in the future this will change
+            std::cerr << "Functions cannot be reassigned.\n";
+        }
+        else {
+            return make_good_result(std::get<KvazzFunction>(lookup_result.result.contents));
+        }
     }
-
-
+    return ERROR_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(IntLiteral &node, shared_ptr<Env> env) {
