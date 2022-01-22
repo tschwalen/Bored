@@ -120,15 +120,15 @@ KvazzResult make_good_result(KvazzValue value) {
             }
         case KvazzType::String:
             {
-                result = std::get<string>(value.value);
+                result = make_good_result(std::get<string>(value.value));
             }
         case KvazzType::Hevec:
             {
-                result = std::get<vector<KvazzValue>>(value.value);
+                result = make_good_result(std::get<vector<KvazzValue>>(value.value));
             }
         case KvazzType::Real:
             {
-                result = std::get<double>(value.value);
+                result = make_good_result(std::get<double>(value.value));
             }
         case KvazzType::Nothing:
         case KvazzType::Builtin:
@@ -624,6 +624,12 @@ KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env) {
     LValue lvalue = std::get<LValue>(node.lvalue->eval(*this, env).kvazz_value.value);
 
     // TODO: handle the various LValue cases
+    /*
+     * regular = operator will be simple
+     *
+     * for the other operators, reuse exising operator code and ignore efficiency for now
+     *
+     * e.g. x <op>= y; --> x = x <op> y;
 
 
 }
