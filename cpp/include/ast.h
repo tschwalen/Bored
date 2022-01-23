@@ -100,8 +100,8 @@ public:
     AssignOpType op_type;
     std::shared_ptr<BaseNode> expr_node;
 
-    /* note that having to copy objects for the children() call isn't the worst thing in the world since the 
-        children() function is only used for testing/debugging of the parser. */
+    /* note that having to copy objects for the children() call isn't the worst thing in the world since
+     * the children() function is only used for testing/debugging of the parser. */
     AssignOp(std::shared_ptr<BaseNode> lvalue_, std::string op_, std::shared_ptr<BaseNode> expr_node_)
         : lvalue { lvalue_ }, op { op_ }, op_type { get_assign_op(op_) }, expr_node { expr_node_ } {}
 

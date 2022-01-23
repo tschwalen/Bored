@@ -607,31 +607,48 @@ KvazzResult Interpreter::eval(Block &node, shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env) {
 
-    // first thing to do is to get the LValue. The Lvalue tells us what kind of
-    // assignment is taking place. So far we're just allowing assignment to a
-    // variable name in an env, or to an index in a list/array.
-
-    /*
-    struct LValue {
-        KvazzType type; // Nothing : env
-        std::variant<std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
-        std::variant<int, std::string> index;
-    };
-    */
-
     // set the lvalue flag so that the next eval will return an lvalue
     this->lvalue_flag = true;
     LValue lvalue = std::get<LValue>(node.lvalue->eval(*this, env).kvazz_value.value);
+    KvazzValue new_value = node.expr_node->eval(*this, env).kvazz_value;
 
-    // TODO: handle the various LValue cases
-    /*
-     * regular = operator will be simple
-     *
-     * for the other operators, reuse exising operator code and ignore efficiency for now
-     *
-     * e.g. x <op>= y; --> x = x <op> y;
+    if (node.op_type != AssignOpType::assign) {
+        KvazzValue old_value = node.lvalue->eval(*this, env).kvazz_value;
+        switch(node.op_type) {
+            case AssignOpType::minus:
+            {
+                new_value = kvazzvalue_minus(old_value, new_value).kvazz_value;
+            }
+            case AssignOpType::divide:
+            {
+                new_value = kvazzvalue_divide(old_value, new_value).kvazz_value;
+            }
+            case AssignOpType::multiply:
+            {
+                new_value = kvazzvalue_multiply(old_value, new_value).kvazz_value;
+            }
+            case AssignOpType::modulo:
+            {
+                new_value = kvazzvalue_modulo(old_value, new_value).kvazz_value;
+            }
+            default:
+            {}
+        }
+    }
 
+    if (lvalue.type == KvazzType::Hevec) {
+        // not sure if this actually modifies the vector due to c++ copies
+        auto the_vector = std::get<vector<KvazzValue>>(lvalue.lvalue);
+        auto index = std::get<int>(lvalue.index);
+        the_vector[index] = new_value;
+    }
+    else {
+        auto the_env = std::get<shared_ptr<Env>>(lvalue.lvalue);
+        auto index = std::get<string>(lvalue.index);
+        the_env->table[index] = new_value;
+    }
 
+    return GOOD_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(Declare &node, shared_ptr<Env> env) {
