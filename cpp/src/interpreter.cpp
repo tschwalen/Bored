@@ -565,7 +565,7 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
 KvazzResult call_function(
         KvazzFunction &fn,
         vector<KvazzValue> &arg_values,
-        shared_ptr<Env> env,
+        /* shared_ptr<Env> env,    // unused for now since all functions are executed with global scope */
         Interpreter &interpreter) {
 
     unordered_map<string, EnvEntry> function_env_map;
@@ -576,6 +576,27 @@ KvazzResult call_function(
     }
     auto function_env = std::make_shared<Env> ( global_env, function_env_map );
     return fn.body->eval(interpreter, function_env);
+}
+
+KvazzResult call_builtin_function (
+        int builtin_fn_id,
+        vector<KvazzValue> &arg_values,
+        shared_ptr<Env> env) {
+
+    switch (builtin_fn_id) {
+        case _print:
+        {}
+
+        case _lengthof:
+        {}
+
+        case _hevec:
+        {}
+
+        default:{}
+    }
+    std::cerr << "Tried calling unknown built-in function with id: " << builtin_fn_id << " \n";
+    return ERROR_NO_VALUE;
 }
 
 /*
@@ -590,7 +611,7 @@ KvazzResult Interpreter::eval(Program &node, shared_ptr<Env> env) {
     if (main_found != env->table.end()) {
         auto main_method = std::get<KvazzFunction>(main_found->second.contents);
         vector<KvazzValue> args;
-        call_function(main_method, args, env, this);
+        call_function(main_method, args, this);
     }
     return GOOD_NO_VALUE;
 }
@@ -638,6 +659,7 @@ KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env) {
 
     if (lvalue.type == KvazzType::Hevec) {
         // not sure if this actually modifies the vector due to c++ copies
+        // may need to change lvalue to pass a reference or pointer
         auto the_vector = std::get<vector<KvazzValue>>(lvalue.lvalue);
         auto index = std::get<int>(lvalue.index);
         the_vector[index] = new_value;
@@ -822,14 +844,19 @@ KvazzResult Interpreter::eval(UnaryOp &node, shared_ptr<Env> env) {
 
 KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
     auto callee_expr_result = node.callee->eval(*this, env);
-    if (callee_expr_result.flag != KvazzFlag::Error &&
-        callee_expr_result.kvazz_value.type == KvazzType::Function)
-    {
-        auto function = std::get<KvazzFunction>(callee_expr_result.kvazz_value.value);
+    if (callee_expr_result.flag != KvazzFlag::Error) {
         vector<KvazzValue> arg_values;
         for (auto &expr_arg : node.expr_args)
             arg_values.push_back(expr_arg->eval(*this, env).kvazz_value);
-        return call_function(function, arg_values, env, this);
+
+        if (callee_expr_result.kvazz_value.type == KvazzType::Function) {
+            auto function = std::get<KvazzFunction>(callee_expr_result.kvazz_value.value);
+            return call_function(function, arg_values, this);
+        }
+        if (callee_expr_result.kvazz_value.type == KvazzType::Builtin) {
+            auto builtin_function_id = std::get<int>(callee_expr_result.kvazz_value.value);
+            return call_builtin_function(builtin_function_id, arg_values, global_env);
+        }
     }
 
     // TODO: handle built-in function case
@@ -905,6 +932,18 @@ KvazzResult Interpreter::eval(VariableLookup &node, shared_ptr<Env> env) {
             return make_good_result(std::get<KvazzFunction>(lookup_result.result.contents));
         }
     }
+    if (lookup_result.result.type == EnvResultType::Builtin) {
+        if (was_lvalue_flag_set) {
+            // Maybe in the future this will change
+            std::cerr << "Built-in functions cannot be reassigned.\n";
+        }
+        else {
+            return KvazzResult {
+                std::get<KvazzValue>(lookup_result.result.contents),
+                KvazzFlag::Good
+            };
+        }
+    }
     return ERROR_NO_VALUE;
 }
 
@@ -932,44 +971,3 @@ KvazzResult Interpreter::eval(VectorLiteral &node, shared_ptr<Env> env) {
     }
     return make_good_result(std::move(results));
 }
-
-
-//KvazzResult eval_assignop(shared_ptr<BaseNode> node, shared_ptr<Env> env) {
-    /*
-    if node->lvalue is a VariableLookup of var x:
-        get env e in which x resides (either tightest bound or global if sigiled)
-        if node->op is standard assign:
-            e[x] = eval(node.rvalue)
-        else:
-            e[x] = e[x] ~node->op~ eval(node.rvalue)
-
-    else if node->lvalue is a Access:
-        get data structure s being indexed into
-        get KvazzValue i being used to index into s
-        get KvazzValue r, the result of eval(node->rvalue)
-        
-        if i is not an int:
-            <not implemented yet>
-            allow only if s is a map data structure
-
-        if s is a string:
-            allow only standard assign
-
-        if s is a homogenous vector:
-            <not implemented yet>
-            ensure that the stored value is an acceptable type
-
-        else:
-            s is a hevector
-            if node->op is standard assign
-                s[i] = r
-            else:
-                s[i] = s[i] ~node->op~ r
-
-    */
-//};
-
-
-
-
-
