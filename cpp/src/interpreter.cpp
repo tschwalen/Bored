@@ -502,6 +502,77 @@ KvazzResult Kvazzvalue_unary_minus(KvazzValue &kv) {
     return ERROR_NO_VALUE;
 }
 
+KvazzResult execute_built_in_print(vector<KvazzValue> &args) {
+    // emulate python's print for now to keep both interpreters acting the same.
+    // Other print functions can act different.
+    int i = 0;
+    while (i < args.size() - 1) {
+        auto &item = args[i];
+        std::cout << ""; // kvazzvalue_as_string(item) TODO: write this function
+        std::cout << " ";
+        ++i;
+    }
+    auto &last = args[i];
+    std::cout << ""; // kvazzvalue_as_string(item)
+    std::cout << "\n";
+    return GOOD_NO_VALUE;
+}
+
+KvazzResult execute_built_in_lengthof(vector<KvazzValue> &args) {
+    // number of args must equal 1
+    if (args.size() != 1) {
+        std::cerr
+            << "Wrong number of arguments passed to built-in function lengthof."
+            << "Expected: 1, Received: " << args.size() << "\n";
+    }
+    else {
+        auto &arg = args[0];
+
+        // arg must be some non-scalar type (only vector or string for now)
+        if (arg.type == KvazzType::Hevec) {
+            vector<KvazzValue> the_vector = std::get<vector<KvazzValue>>(arg.value);
+            int length = the_vector.size();
+            return make_good_result(length);
+        }
+        if (arg.type == KvazzType::String) {
+            string the_string = std::get<string>(arg.value);
+            int length = the_string.size();
+            return make_good_result(length);
+        }
+        std::cerr
+            << "Unsupported type for lengthof. Expected non-scalar type, Received: "
+            << (int)arg.type << "\n"; // todo: enum-to-string function for KvazzType
+    }
+    return ERROR_NO_VALUE;
+}
+
+KvazzResult execute_built_in_hevec(vector<KvazzValue> &args) {
+    if (args.size() > 0 && args.size() < 3) {
+        auto length_kvalue = args[0];
+        // length must be of type int
+        if (length_kvalue.type != KvazzType::Int) {
+            std::cerr
+                << "Invalid type given for hevec length. Expected: Int, Received: "
+                << (int)length_kvalue.type << "\n"; // TODO: fix
+            goto _HEVEC_ERROR;
+        }
+        int length = std::get<int>(length_kvalue.value);
+        auto default_kvalue = args.size() == 2 ? args[1] : NOTHING;
+        vector<KvazzValue> new_hevec(length);
+        for (int i = 0; i < length; ++i) {
+            new_hevec[i] = default_kvalue;
+        }
+        return make_good_result(new_hevec);
+    }
+    else {
+        std::cerr
+            << "Invalid number of args passed to built-in-function hevec. "
+            << "Expected: 1 or 2, Received: " << args.size() << "\n";
+    }
+    _HEVEC_ERROR:
+    return ERROR_NO_VALUE;
+}
+
 enum built_in_function_ids {
     _print,
     _lengthof,
