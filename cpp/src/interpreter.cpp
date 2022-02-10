@@ -7,6 +7,7 @@
 #include <memory>
 #include <iostream>
 #include <unordered_map>
+#include <sstream>
 
 using std::unordered_map; 
 using std::shared_ptr;
@@ -34,6 +35,68 @@ KvazzResult GOOD_BOOL_FALSE = KvazzResult {
     },
     KvazzFlag::Good
 };
+
+string kvazzvalue_as_string(KvazzValue &item) {
+    std::stringstream result;
+
+    switch(item.type) {
+        case KvazzType::Bool:
+        {
+            result << std::get<bool>(item.value) ? "true" : "false";
+        }
+        case KvazzType::Nothing:
+        {
+            result << "Nothing";
+        }
+        case KvazzType::Int:
+        {
+            result << std::get<int>(item.value);
+        }
+        case KvazzType::Real:
+        {
+            result << std::get<double>(item.value);
+        }
+        case KvazzType::String:
+        {
+            result << std::get<string>(item.value);
+        }
+        case KvazzType::Hevec:
+        {
+            auto v = std::get<vector<KvazzValue>>(item.value);
+            result << "[";
+            for(int i = 0; i < v.size(); ++i) {
+                result << kvazzvalue_as_string(v[i]);
+                if (i != v.size() - 1) {
+                    result << ", ";
+                }
+            }
+            result << "]";
+        }
+        case KvazzType::LValue:
+        {
+            // shouldn't really happen
+            result << "LValue";
+        }
+        case KvazzType::Function:
+        {
+            KvazzFunction kf = std::get<KvazzFunction>(item.value);
+            result << "Function<" << kf.name << "(";
+            for(int i = 0; i < kf.args.size(); ++i) {
+                result << kf.args[i];
+                if (i != kf.args.size() - 1) {
+                    result << ", ";
+                }
+            }
+            result << ")>";
+        }
+        case KvazzType::Builtin:
+        {
+            // TODO: could replace with builtin-id -> string later
+            result << "Builtin<" << std::get<int>(item.value) << ">";
+        }
+    }
+    return result.str();
+}
 
 // Int, Real, Bool, String, Hevec
 KvazzResult make_good_result(bool value) {
@@ -508,12 +571,12 @@ KvazzResult execute_built_in_print(vector<KvazzValue> &args) {
     int i = 0;
     while (i < args.size() - 1) {
         auto &item = args[i];
-        std::cout << ""; // kvazzvalue_as_string(item) TODO: write this function
+        std::cout << kvazzvalue_as_string(item);
         std::cout << " ";
         ++i;
     }
     auto &last = args[i];
-    std::cout << ""; // kvazzvalue_as_string(item)
+    std::cout << kvazzvalue_as_string(last);
     std::cout << "\n";
     return GOOD_NO_VALUE;
 }
@@ -930,7 +993,6 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
         }
     }
 
-    // TODO: handle built-in function case
     return ERROR_NO_VALUE;
 }
 
