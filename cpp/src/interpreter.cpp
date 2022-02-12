@@ -14,6 +14,10 @@ using std::shared_ptr;
 using std::vector;
 using std::string;
 
+/////////////////////////////////////////////////////////////////////////////////////
+// USEFUL CONSTANTS
+//
+/////////////////////////////////////////////////////////////////////////////////////
 KvazzValue NOTHING = KvazzValue { KvazzType::Nothing, 0 };
 
 KvazzResult ERROR_NO_VALUE = KvazzResult { NOTHING, KvazzFlag::Error };
@@ -140,6 +144,11 @@ string kvazzvalue_as_string(KvazzValue &item) {
     return result.str();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+// MAKE GOOD RESULT
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
 // Int, Real, Bool, String, Hevec
 KvazzResult make_good_result(bool value) {
     return KvazzResult {
@@ -249,10 +258,13 @@ KvazzResult make_good_result(KvazzValue value) {
 /* 
 *   Utility Functions
 */
+
+// UNUSED
 bool is_gnr(KvazzResult &kr) {
     return kr.flag == KvazzFlag::Good && kr.kvazz_value.type == KvazzType::Nothing;
 }
 
+// UNUSED
 bool is_numeric_type(KvazzType t) {
     return t == KvazzType::Int || t == KvazzType::Real;
 }
@@ -306,7 +318,10 @@ bool truthy_test(KvazzResult kr) {
     return false;
 }
 
-// these functions can probably go into a different file... maybe asteval.cpp
+/////////////////////////////////////////////////////////////////////////////////////
+// KVAZZVALUE OPERATORS
+//
+/////////////////////////////////////////////////////////////////////////////////////
 
 KvazzResult kvazzvalue_plus(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
@@ -607,6 +622,11 @@ KvazzResult Kvazzvalue_unary_minus(KvazzValue &kv) {
     return ERROR_NO_VALUE;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+// BUILT-IN FUNCTIONS
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
 KvazzResult execute_built_in_print(vector<KvazzValue> &args) {
     // emulate python's print for now to keep both interpreters acting the same.
     // Other print functions can act different.
@@ -707,6 +727,11 @@ string build_in_function_as_string(int id) {
     return "INVALID_BUILTIN";
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+// INTERPRETER
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
 // maybe this should be part of the interpreter class
 shared_ptr<Env> global_env = std::make_shared<Env> (
     nullptr, 
@@ -768,19 +793,15 @@ KvazzResult call_function(
 
 KvazzResult call_builtin_function (
         int builtin_fn_id,
-        vector<KvazzValue> &arg_values,
-        shared_ptr<Env> env) {
+        vector<KvazzValue> &arg_values) {
 
     switch (builtin_fn_id) {
         case _print:
-        {}
-
+            return execute_built_in_print(arg_values);
         case _lengthof:
-        {}
-
+            return execute_built_in_lengthof(arg_values);
         case _hevec:
-        {}
-
+            return execute_built_in_hevec(arg_values);
         default:{}
     }
     std::cerr << "Tried calling unknown built-in function with id: " << builtin_fn_id << " \n";
@@ -850,7 +871,7 @@ KvazzResult Interpreter::eval(AssignOp &node, shared_ptr<Env> env) {
         // may need to change lvalue to pass a reference or pointer
         auto the_vector = std::get<vector<KvazzValue>>(lvalue.lvalue);
         auto index = std::get<int>(lvalue.index);
-        the_vector[index] = new_value;
+        the_vector.at(index) = std::move(new_value);
     }
     else {
         auto the_env = std::get<shared_ptr<Env>>(lvalue.lvalue);
@@ -1043,7 +1064,7 @@ KvazzResult Interpreter::eval(FunctionCall &node, shared_ptr<Env> env) {
         }
         if (callee_expr_result.kvazz_value.type == KvazzType::Builtin) {
             auto builtin_function_id = std::get<int>(callee_expr_result.kvazz_value.value);
-            return call_builtin_function(builtin_function_id, arg_values, global_env);
+            return call_builtin_function(builtin_function_id, arg_values);
         }
     }
 
