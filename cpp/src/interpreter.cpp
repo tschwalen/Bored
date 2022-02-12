@@ -36,6 +36,49 @@ KvazzResult GOOD_BOOL_FALSE = KvazzResult {
     KvazzFlag::Good
 };
 
+// enum-to-string function for KvazzType
+string kvazztype_as_string(KvazzType t) {
+    // could probably be rewritten into table lookup
+    switch(t) {
+        case KvazzType::Bool:
+        {
+           return "Bool";
+        }
+        case KvazzType::Nothing:
+        {
+            return "Nothing";
+        }
+        case KvazzType::Int:
+        {
+            return "Int";
+        }
+        case KvazzType::Real:
+        {
+            return "Real";
+        }
+        case KvazzType::String:
+        {
+            return "String";
+        }
+        case KvazzType::Hevec:
+        {
+            return "Hevec";
+        }
+        case KvazzType::LValue:
+        {
+            return "LValue";
+        }
+        case KvazzType::Function:
+        {
+            return "Function";
+        }
+        case KvazzType::Builtin:
+        {
+            return "Builtin";
+        }
+    }
+}
+
 string kvazzvalue_as_string(KvazzValue &item) {
     std::stringstream result;
 
@@ -91,8 +134,7 @@ string kvazzvalue_as_string(KvazzValue &item) {
         }
         case KvazzType::Builtin:
         {
-            // TODO: could replace with builtin-id -> string later
-            result << "Builtin<" << std::get<int>(item.value) << ">";
+            result << "Builtin<" << build_in_function_as_string(std::get<int>(item.value)) << ">";
         }
     }
     return result.str();
@@ -604,7 +646,7 @@ KvazzResult execute_built_in_lengthof(vector<KvazzValue> &args) {
         }
         std::cerr
             << "Unsupported type for lengthof. Expected non-scalar type, Received: "
-            << (int)arg.type << "\n"; // todo: enum-to-string function for KvazzType
+            << kvazztype_as_string(arg.type) << "\n";
     }
     return ERROR_NO_VALUE;
 }
@@ -616,7 +658,7 @@ KvazzResult execute_built_in_hevec(vector<KvazzValue> &args) {
         if (length_kvalue.type != KvazzType::Int) {
             std::cerr
                 << "Invalid type given for hevec length. Expected: Int, Received: "
-                << (int)length_kvalue.type << "\n"; // TODO: fix
+                << kvazztype_as_string(length_kvalue.type) << "\n";
             goto _HEVEC_ERROR;
         }
         int length = std::get<int>(length_kvalue.value);
@@ -652,6 +694,18 @@ unordered_map<string, int> built_in_function_table = {
     {"lengthof", _lengthof},
     {"hevec", _hevec},
 };
+
+string build_in_function_as_string(int id) {
+    switch (id) {
+        case _print:
+            return "print";
+        case _lengthof:
+            return "lengthof";
+        case _hevec:
+            return "hevec";
+    }
+    return "INVALID_BUILTIN";
+}
 
 // maybe this should be part of the interpreter class
 shared_ptr<Env> global_env = std::make_shared<Env> (
