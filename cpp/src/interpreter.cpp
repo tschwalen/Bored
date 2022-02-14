@@ -81,6 +81,7 @@ string kvazztype_as_string(KvazzType t) {
             return "Builtin";
         }
     }
+    return "";
 }
 
 string kvazzvalue_as_string(KvazzValue &item) {
@@ -89,7 +90,7 @@ string kvazzvalue_as_string(KvazzValue &item) {
     switch(item.type) {
         case KvazzType::Bool:
         {
-            result << std::get<bool>(item.value) ? "true" : "false";
+            result << (std::get<bool>(item.value) ? "true" : "false");
         }
         case KvazzType::Nothing:
         {
@@ -733,10 +734,9 @@ string built_in_function_as_string(int id) {
 /////////////////////////////////////////////////////////////////////////////////////
 
 // maybe this should be part of the interpreter class
-shared_ptr<Env> global_env = std::make_shared<Env> (
-    nullptr,
-    unordered_map<string, EnvEntry>()
-);
+
+shared_ptr<Env> null_env = shared_ptr<Env>(nullptr);
+shared_ptr<Env> global_env;
 
 LookupResult lookup(string identifier, shared_ptr<Env> env) {
     auto result = built_in_function_table.find(identifier);
@@ -787,7 +787,7 @@ KvazzResult call_function(
         function_env_map.emplace(arg_name, EnvEntry {EnvResultType::Value, arg_values[argv_index]});
         ++argv_index;
     }
-    auto function_env = std::make_shared<Env> ( global_env, function_env_map );
+    auto function_env = std::make_shared<Env> ( std::move(global_env), function_env_map );
     return fn.body->eval(interpreter, function_env);
 }
 
@@ -826,7 +826,7 @@ KvazzResult Interpreter::eval(Program *node, shared_ptr<Env> env) {
 }
 
 KvazzResult Interpreter::eval(Block *node, shared_ptr<Env> env) {
-    auto local_env = std::make_shared<Env>(env, unordered_map<string, EnvEntry>());
+    auto local_env = std::make_shared<Env>(std::move(env), unordered_map<string, EnvEntry>{});
     for (auto nd : node->children()) {
         auto result = nd->eval(*this, local_env);
         if (result.flag == KvazzFlag::Return)
@@ -876,7 +876,7 @@ KvazzResult Interpreter::eval(AssignOp *node, shared_ptr<Env> env) {
     else {
         auto the_env = std::get<shared_ptr<Env>>(lvalue.lvalue);
         auto index = std::get<string>(lvalue.index);
-        the_env->table[index] = std::move(new_value);
+        the_env->table[index] = EnvEntry { EnvResultType::Value, new_value };
     }
 
     return GOOD_NO_VALUE;

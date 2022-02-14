@@ -87,6 +87,8 @@ struct Env
 {
     std::shared_ptr<Env> parent;
     std::unordered_map<std::string, EnvEntry> table;
+    Env(std::shared_ptr<Env> _parent, std::unordered_map<std::string, EnvEntry> _table)
+        : parent { _parent }, table { std::move(_table) } {}
 };
 
 struct LookupResult
