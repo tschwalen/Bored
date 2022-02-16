@@ -91,22 +91,27 @@ string kvazzvalue_as_string(KvazzValue &item) {
         case KvazzType::Bool:
         {
             result << (std::get<bool>(item.value) ? "true" : "false");
+            break;
         }
         case KvazzType::Nothing:
         {
             result << "Nothing";
+            break;
         }
         case KvazzType::Int:
         {
             result << std::get<int>(item.value);
+            break;
         }
         case KvazzType::Real:
         {
             result << std::get<double>(item.value);
+            break;
         }
         case KvazzType::String:
         {
             result << std::get<string>(item.value);
+            break;
         }
         case KvazzType::Hevec:
         {
@@ -119,11 +124,13 @@ string kvazzvalue_as_string(KvazzValue &item) {
                 }
             }
             result << "]";
+            break;
         }
         case KvazzType::LValue:
         {
             // shouldn't really happen
             result << "LValue";
+            break;
         }
         case KvazzType::Function:
         {
@@ -136,10 +143,12 @@ string kvazzvalue_as_string(KvazzValue &item) {
                 }
             }
             result << ")>";
+            break;
         }
         case KvazzType::Builtin:
         {
             result << "Builtin<" << built_in_function_as_string(std::get<int>(item.value)) << ">";
+            break;
         }
     }
     return result.str();
@@ -223,27 +232,26 @@ KvazzResult make_good_result(KvazzFunction value) {
 
 KvazzResult make_good_result(KvazzValue value) {
     //switch on every type and then just call make_good_result once you std::get the type
-    KvazzResult result;
     switch(value.type) {
         case KvazzType::Bool:
             {
-                result = make_good_result(std::get<bool>(value.value));
+                return make_good_result(std::get<bool>(value.value));
             }
         case KvazzType::Int:
             {
-                result = make_good_result(std::get<int>(value.value));
+                return make_good_result(std::get<int>(value.value));
             }
         case KvazzType::String:
             {
-                result = make_good_result(std::get<string>(value.value));
+                return make_good_result(std::get<string>(value.value));
             }
         case KvazzType::Hevec:
             {
-                result = make_good_result(std::get<vector<KvazzValue>>(value.value));
+                return make_good_result(std::get<vector<KvazzValue>>(value.value));
             }
         case KvazzType::Real:
             {
-                result = make_good_result(std::get<double>(value.value));
+                return make_good_result(std::get<double>(value.value));
             }
         case KvazzType::Nothing:
         case KvazzType::Builtin:
@@ -253,7 +261,7 @@ KvazzResult make_good_result(KvazzValue value) {
                 std::cerr << "Attempted to make_good_value on invalid KvazzType.\n";
             }
     }
-    return result;
+    return ERROR_NO_VALUE;
 }
 
 /* 
@@ -327,7 +335,6 @@ bool truthy_test(KvazzResult kr) {
 KvazzResult kvazzvalue_plus(KvazzValue &kv1, KvazzValue &kv2) {
     auto left_type = kv1.type;
     auto right_type = kv2.type;
-
     if(left_type == right_type) {
         if(left_type == KvazzType::Int) {
             return make_good_result(std::get<int>(kv1.value) + std::get<int>(kv2.value));
@@ -736,7 +743,10 @@ string built_in_function_as_string(int id) {
 // maybe this should be part of the interpreter class
 
 shared_ptr<Env> null_env = shared_ptr<Env>(nullptr);
-shared_ptr<Env> global_env;
+shared_ptr<Env> global_env = std::make_shared<Env>(
+    std::move(null_env),
+    unordered_map<string, EnvEntry>{}
+);
 
 LookupResult lookup(string identifier, shared_ptr<Env> env) {
     auto result = built_in_function_table.find(identifier);
@@ -811,6 +821,11 @@ KvazzResult call_builtin_function (
 /*
 *  AST-eval Interpreter class methods
 */
+KvazzResult Interpreter::eval(BaseNode *node, shared_ptr<Env> env) {
+    std::cerr << "Eval not implemented for BaseNode\n";
+    return ERROR_NO_VALUE;
+}
+
 KvazzResult Interpreter::eval(Program *node, shared_ptr<Env> env) {
     for (auto nd : node->children()) {
         nd->eval(*this, env);
@@ -848,18 +863,22 @@ KvazzResult Interpreter::eval(AssignOp *node, shared_ptr<Env> env) {
             case AssignOpType::minus:
             {
                 new_value = kvazzvalue_minus(old_value, new_value).kvazz_value;
+                break;
             }
             case AssignOpType::divide:
             {
                 new_value = kvazzvalue_divide(old_value, new_value).kvazz_value;
+                break;
             }
             case AssignOpType::multiply:
             {
                 new_value = kvazzvalue_multiply(old_value, new_value).kvazz_value;
+                break;
             }
             case AssignOpType::modulo:
             {
                 new_value = kvazzvalue_modulo(old_value, new_value).kvazz_value;
+                break;
             }
             default:
             {}
@@ -955,77 +974,76 @@ KvazzResult Interpreter::eval(BinaryOp *node, shared_ptr<Env> env) {
     // I want operators to have meaning on various types e.g. '+' is both arithemetic addition as well
     // as string and maybe array concat as well. So lots of type checking code will be involved in
     // operator code.
-    KvazzResult result;
     switch(node->op_type) {
         case BinaryOpType::pipe:
         {
             // defined on all types through truthy/falsey -ness
             // logical OR
-            result = make_good_result(truthy_test(left) || truthy_test(right));
+            return make_good_result(truthy_test(left) || truthy_test(right));
         }
         case BinaryOpType::amper:
         {
             // defined on all types through truthy/falsey -ness
             // logical AND
-            result = make_good_result(truthy_test(left) && truthy_test(right));
+            return make_good_result(truthy_test(left) && truthy_test(right));
         }
         case BinaryOpType::equals:
         {
             // defined on all types
-            result = make_good_result(kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
+            return make_good_result(kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::not_equals:
         {
             // defined on all types
-            result = make_good_result(!kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
+            return make_good_result(!kvazzvalue_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::less_equals:
         {
             // defined for numeric types
-            result = make_good_result(kvazzvalue_less_equals(left.kvazz_value, right.kvazz_value));
+            return make_good_result(kvazzvalue_less_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::greater_equals:
         {
             // defined for numeric types
-            result = make_good_result(kvazzvalue_greater_equals(left.kvazz_value, right.kvazz_value));
+            return make_good_result(kvazzvalue_greater_equals(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::less_than:
         {
             // defined for numeric types
-            result = make_good_result(kvazzvalue_less_than(left.kvazz_value, right.kvazz_value));
+            return make_good_result(kvazzvalue_less_than(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::greater_than:
         {
             // defined for numeric types
-            result = make_good_result(kvazzvalue_greater_than(left.kvazz_value, right.kvazz_value));
+            return make_good_result(kvazzvalue_greater_than(left.kvazz_value, right.kvazz_value));
         }
         case BinaryOpType::plus:
         {
             // defined for numeric types (as arithmetic plus), strings, and vectors (as concat)
-            result = kvazzvalue_plus(left.kvazz_value, right.kvazz_value);
+            return kvazzvalue_plus(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::minus:
         {
             // defined for numeric types
-            result = kvazzvalue_minus(left.kvazz_value, right.kvazz_value);
+            return kvazzvalue_minus(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::multiply:
         {
             // defined for numeric types
-            result = kvazzvalue_multiply(left.kvazz_value, right.kvazz_value);
+            return kvazzvalue_multiply(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::divide:
         {
             // defined for numeric types
-            result = kvazzvalue_divide(left.kvazz_value, right.kvazz_value);
+            return kvazzvalue_divide(left.kvazz_value, right.kvazz_value);
         }
         case BinaryOpType::modulo:
         {
             // defined on integers only
-            result = kvazzvalue_modulo(left.kvazz_value, right.kvazz_value);
+            return kvazzvalue_modulo(left.kvazz_value, right.kvazz_value);
         }
     }
-    return result;
+    return ERROR_NO_VALUE;
 }
 
 KvazzResult Interpreter::eval(UnaryOp *node, shared_ptr<Env> env) {
@@ -1034,20 +1052,19 @@ KvazzResult Interpreter::eval(UnaryOp *node, shared_ptr<Env> env) {
         // might should do a system exit here... not sure, better error handling will come
         return KvazzResult { NOTHING, KvazzFlag::Error };
     }
-    KvazzResult result;
     switch(node->op_type) {
         case UnaryOpType::bang:
         {
             // defined on all valid types
-            result = make_good_result(truthy_test(right));
+            return make_good_result(truthy_test(right));
         }
         case UnaryOpType::minus:
         {
             // defined on numeric types
-            result = Kvazzvalue_unary_minus(right.kvazz_value);
+            return Kvazzvalue_unary_minus(right.kvazz_value);
         }
     }
-    return result;
+    return ERROR_NO_VALUE;
 
 }
 
@@ -1178,4 +1195,11 @@ KvazzResult Interpreter::eval(VectorLiteral *node, shared_ptr<Env> env) {
         }
     }
     return make_good_result(std::move(results));
+}
+
+// Entry point method
+void run_ast_interpreter(std::shared_ptr<BaseNode> ast) {
+    Interpreter i;
+    auto result = ast->eval(i, global_env);
+    // Todo: print something about the result?
 }

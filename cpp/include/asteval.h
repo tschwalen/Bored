@@ -105,6 +105,7 @@ private:
     bool lvalue_flag;
 
 public:
+    virtual KvazzResult eval(BaseNode *node, std::shared_ptr<Env> env) = 0;
     virtual KvazzResult eval(Program *node, std::shared_ptr<Env> env) = 0;
     virtual KvazzResult eval(Block *node, std::shared_ptr<Env> env) = 0;
     virtual KvazzResult eval(AssignOp *node, std::shared_ptr<Env> env) = 0;

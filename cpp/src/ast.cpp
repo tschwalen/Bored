@@ -58,10 +58,6 @@ UnaryOpType get_unary_op (string op) {
     return UnaryOpType::minus;
 }
 
-
-
-
-
 // unused, thought I may need them for binop eval for interpreter, not sure now
 bool is_arithmetic_binop(BinaryOpType op) {
     return op == BinaryOpType::plus ||
@@ -89,6 +85,10 @@ bool is_logical_binop(BinaryOpType op) {
 }
 
 // ast eval methods
+KvazzResult BaseNode::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
 KvazzResult Program::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
     return ast_eval.eval(this, env);
 }

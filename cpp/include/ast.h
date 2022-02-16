@@ -54,7 +54,7 @@ public:
     virtual NodeType              type() = 0;
     virtual std::string           value() = 0;
     virtual const std::vector<std::shared_ptr<BaseNode>>  children() = 0;
-    virtual KvazzResult eval(class AstEvaluator &ast_eval, std::shared_ptr<Env> env) = 0;
+    virtual KvazzResult eval(class AstEvaluator &ast_eval, std::shared_ptr<Env> env);
 };
 
 class Program : public BaseNode 

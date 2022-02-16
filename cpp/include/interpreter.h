@@ -1,8 +1,9 @@
 #pragma once
 #include "asteval.h"
 #include "ast.h"
+#include <memory>
 
-
+void run_ast_interpreter(std::shared_ptr<BaseNode> ast);
 
 bool is_gnr(KvazzResult &kr);
 
@@ -13,6 +14,7 @@ private:
     bool lvalue_flag = false;
 
 public:
+    virtual KvazzResult eval(BaseNode *node, std::shared_ptr<Env> env) override;
     virtual KvazzResult eval(Program *node, std::shared_ptr<Env> env) override;
     virtual KvazzResult eval(Block *node, std::shared_ptr<Env> env) override;
     virtual KvazzResult eval(AssignOp *node, std::shared_ptr<Env> env) override;
