@@ -10,10 +10,7 @@
 
 using std::string;
 
-
 enum Command { lex, parse, exec, compile };
-
-
 
 void do_main(int argc, const char* argv[], Command cmd) {
     if ( !(argc > 2) ) return;
@@ -34,8 +31,6 @@ void do_main(int argc, const char* argv[], Command cmd) {
     if (cmd == parse) return;
 
 }
-
-
 
 /*
 *

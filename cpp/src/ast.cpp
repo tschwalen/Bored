@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "asteval.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -58,6 +59,9 @@ UnaryOpType get_unary_op (string op) {
 }
 
 
+
+
+
 // unused, thought I may need them for binop eval for interpreter, not sure now
 bool is_arithmetic_binop(BinaryOpType op) {
     return op == BinaryOpType::plus ||
@@ -82,4 +86,84 @@ bool is_equality_binop(BinaryOpType op) {
 bool is_logical_binop(BinaryOpType op) {
     return op == BinaryOpType::pipe ||
             op == BinaryOpType::amper;
+}
+
+// ast eval methods
+KvazzResult Program::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult Block::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult AssignOp::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult Declare::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult FunctionDeclare::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult Return::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult IfThen::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult IfElse::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult While::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+
+KvazzResult BinaryOp::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+
+KvazzResult UnaryOp::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+
+KvazzResult FunctionCall::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult Access::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult VariableLookup::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult IntLiteral::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult BoolLiteral::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult RealLiteral::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult StringLiteral::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
+}
+
+KvazzResult VectorLiteral::eval(AstEvaluator &ast_eval, std::shared_ptr<Env> env) {
+    return ast_eval.eval(this, env);
 }
