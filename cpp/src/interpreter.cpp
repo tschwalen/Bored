@@ -860,6 +860,11 @@ KvazzResult Interpreter::eval(AssignOp *node, shared_ptr<Env> env) {
     if (node->op_type != AssignOpType::assign) {
         KvazzValue old_value = node->lvalue->eval(*this, env).kvazz_value;
         switch(node->op_type) {
+            case AssignOpType::plus:
+            {
+                new_value = kvazzvalue_plus(old_value, new_value).kvazz_value;
+                break;
+            }
             case AssignOpType::minus:
             {
                 new_value = kvazzvalue_minus(old_value, new_value).kvazz_value;
