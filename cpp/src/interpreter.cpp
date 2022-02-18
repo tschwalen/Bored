@@ -593,6 +593,19 @@ bool kvazzvalue_equals(KvazzValue &kv1, KvazzValue &kv2) {
     }
 
     // from here on out left_type == right_type
+
+    if (left_type == KvazzType::Int) {
+        auto left_value = std::get<int>(kv1.value);
+        auto right_value = std::get<int>(kv2.value);
+        return left_value == right_value;
+    }
+
+    if (left_type == KvazzType::Real) {
+        auto left_value = std::get<double>(kv1.value);
+        auto right_value = std::get<double>(kv2.value);
+        return left_value == right_value;
+    }
+
     if (left_type == KvazzType::String) {
         auto left_value = std::get<string>(kv1.value);
         auto right_value = std::get<string>(kv2.value);
