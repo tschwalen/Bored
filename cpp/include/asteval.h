@@ -51,7 +51,7 @@ enum class EnvResultType {
 
 struct LValue {
     KvazzType type; // Nothing : env
-    std::variant<std::shared_ptr<Env>, std::vector<KvazzValue>> lvalue;
+    std::variant<std::shared_ptr<Env>, std::vector<KvazzValue>*> lvalue;
     std::variant<int, std::string> index;
 };
 

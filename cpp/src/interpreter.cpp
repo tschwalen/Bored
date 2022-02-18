@@ -771,7 +771,7 @@ LookupResult lookup(string identifier, shared_ptr<Env> env) {
         curr_env = curr_env->parent;
     }
     
-    std::cerr << "Lookup of identifier " << identifier << "failed." << std::endl; 
+    std::cerr << "Lookup of identifier " << identifier << " failed." << std::endl;
     return LookupResult {
         EnvEntry {
             EnvResultType::Value,
@@ -893,9 +893,11 @@ KvazzResult Interpreter::eval(AssignOp *node, shared_ptr<Env> env) {
     if (lvalue.type == KvazzType::Hevec) {
         // not sure if this actually modifies the vector due to c++ copies
         // may need to change lvalue to pass a reference or pointer
-        auto the_vector = std::get<vector<KvazzValue>>(lvalue.lvalue);
+        auto the_vector = std::get<vector<KvazzValue>*>(lvalue.lvalue);
         auto index = std::get<int>(lvalue.index);
-        the_vector.at(index) = std::move(new_value);
+        std::cout << "Vector index: " << index << " set to " << kvazzvalue_as_string(new_value) << "\n";
+        the_vector->at(index) = std::move(new_value);
+
     }
     else {
         auto the_env = std::get<shared_ptr<Env>>(lvalue.lvalue);
@@ -1108,7 +1110,7 @@ KvazzResult Interpreter::eval(Access *node, shared_ptr<Env> env) {
             if (index < the_vec.size()) {
                 if (was_lvalue_flag_set) {
                     // make an lvalue and return that instead
-                    LValue lvalue { KvazzType::Hevec, the_vec, index };
+                    LValue lvalue { KvazzType::Hevec, &the_vec, index };
                     return make_good_result(lvalue);
                 } else {
                     return make_good_result(the_vec[index]);
